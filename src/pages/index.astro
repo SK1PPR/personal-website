@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+import Section from '@/components/Section.astro';
+import { SITE } from '@/consts';
+import { formatDate, readingTime, sortByDate } from '@/utils/content';
+
+const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft)).slice(0, 3);
+const projects = (await getCollection('projects'))
+  .filter((project) => project.data.featured)
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+---
+
+<BaseLayout>
+  <section class="border-b border-[var(--line)]">
+    <div class="mx-auto grid max-w-page gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
+      <div>
+        <p class="mb-5 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Distributed Systems & Infrastructure Engineer</p>
+        <h1 class="max-w-4xl text-5xl font-semibold tracking-normal sm:text-6xl">
+          Khushal Agrawal
+        </h1>
+        <p class="mt-6 max-w-3xl text-xl leading-9 text-[var(--muted)]">
+          Building distributed systems, observability platforms, AI runtime infrastructure, and open-source software.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.github}>GitHub</a>
+          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.linkedin}>LinkedIn</a>
+          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.twitter}>X/Twitter</a>
+          <a class="rounded bg-[var(--text)] px-4 py-2 text-sm text-[var(--bg)]" href="/resume">Resume</a>
+        </div>
+      </div>
+      <div class="notebook-panel rounded-md p-5 font-mono text-sm leading-7 text-[var(--muted)]">
+        <p class="text-[var(--accent)]">$ focus --now</p>
+        <p>location: Roorkee, India</p>
+        <p>stack: rust, c++, python, linux, docker</p>
+        <p>systems: redis, rocksdb, emulators, p2p networking</p>
+        <p>mode: build the primitive, measure the edge cases</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-page px-4 sm:px-6">
+    <Section title="Short Bio" eyebrow="Profile">
+      <p class="max-w-reading text-lg leading-8 text-[var(--muted)]">
+        I am a Computer Science undergraduate at IIT Roorkee focused on systems, infrastructure, databases, networking, and low-level software. This site is my public notebook for architecture notes, experiments, case studies, and open-source work.
+      </p>
+    </Section>
+
+    <Section title="Current Focus Areas" eyebrow="Research">
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {['Rust systems programming', 'Database internals', 'Emulators and virtual machines', 'Networking protocols'].map((item) => (
+          <Card title={item} description="Design notes, experiments, measurements, and implementation writeups." />
+        ))}
+      </div>
+    </Section>
+
+    <Section title="Featured Projects" eyebrow="Case studies">
+      <div class="grid gap-4 md:grid-cols-3">
+        {projects.map((project) => (
+          <Card href={`/projects/${project.slug}/`} title={project.data.title} meta={project.data.category} description={project.data.description} />
+        ))}
+      </div>
+    </Section>
+
+    <Section title="Latest Blog Posts" eyebrow="Notes">
+      <div class="grid gap-4 md:grid-cols-3">
+        {posts.map((post) => (
+          <Card href={`/blog/${post.slug}/`} title={post.data.title} meta={`${formatDate(post.data.pubDate)} / ${readingTime(post.body)}`} description={post.data.description} />
+        ))}
+      </div>
+    </Section>
+
+    <Section title="OSS Contributions" eyebrow="Open source">
+      <div class="grid gap-4 md:grid-cols-3">
+        <Card title="Google Summer of Code" meta="Inkscape" description="Re-implemented Node and Pen Tool UX workflows and optimized Bezier curve rendering in C++/Gtkmm." />
+        <Card title="SDSLabs" meta="developer" description="Contributed to technical applications and open-source engineering work from the IIT Roorkee student developer group." />
+        <Card title="Systems Projects" meta="github.com/SK1PPR" description="Redis clone, vector database, emulators, assembler, and peer-to-peer networking projects." />
+      </div>
+    </Section>
+  </div>
+</BaseLayout>

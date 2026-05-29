@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="Projects" description="Engineering case studies across distributed systems, databases, networking, observability, AI infrastructure, and systems programming.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Case studies</p>
+    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Projects</h1>
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      {projects.map((project) => (
+        <Card href={`/projects/${project.slug}/`} title={project.data.title} meta={`${project.data.category} / ${project.data.status}`} description={project.data.description} />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

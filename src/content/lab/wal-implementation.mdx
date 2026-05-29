@@ -1,0 +1,20 @@
+---
+title: "Write-Ahead Log Implementation"
+description: "Storage experiment for record framing, checksums, segment rotation, and crash recovery."
+area: "Storage"
+status: "in progress"
+updated: 2026-05-10
+tags: ["wal", "storage", "recovery"]
+---
+
+## Question
+
+What is the smallest WAL format that can survive partial writes and still recover quickly?
+
+## Sketch
+
+Each record stores length, checksum, payload, and commit marker. Segment recovery scans until the first invalid record and truncates from that point.
+
+## Measurements
+
+The useful metrics are append latency, recovery time, segment size, checksum cost, and fsync policy impact.

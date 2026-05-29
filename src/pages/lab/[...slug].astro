@@ -1,0 +1,24 @@
+---
+import { getCollection, render } from 'astro:content';
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import { formatDate } from '@/utils/content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('lab');
+  return entries.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<ContentLayout title={entry.data.title} description={entry.data.description} eyebrow={`${entry.data.area} / updated ${formatDate(entry.data.updated)}`}>
+  <Fragment slot="aside">
+    <p class="font-mono text-xs uppercase tracking-[0.16em] text-[var(--accent)]">Experiment</p>
+    <p class="mt-4">{entry.data.status}</p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      {entry.data.tags.map((tag) => <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs">{tag}</span>)}
+    </div>
+  </Fragment>
+  <Content />
+</ContentLayout>

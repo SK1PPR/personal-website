@@ -1,0 +1,153 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const experiences = [
+  {
+    role: "AI Prompt Engineer for Google's Gemini",
+    org: 'Uber AI',
+    date: 'Jan 2026 - Current',
+    points: [
+      'Designed challenging evaluation tasks for Gemini within Terminal Bench and Colab Bench, targeting temporal reasoning, multimodal data integration, and physics-based inference.',
+      'Built rigorous test harnesses to verify agent trajectories and intermediate reasoning artifacts beyond final outputs.',
+      'Engineered tasks involving loss and failure analysis, anomaly detection, and signal decoding to identify capability gaps in LLM agents.',
+      'Tech Stack: Python, Jupyter, Docker, NumPy, SciPy'
+    ]
+  },
+  {
+    role: 'Summer Analyst',
+    org: 'Goldman Sachs',
+    date: 'June 2025 - Aug 2025',
+    points: [
+      'Designed and implemented a data migration tool to transfer petabyte-scale in-house datasets to Snowflake using Apache Flink.',
+      'Built Java-based microservices with Jersey and integrated React components for real-time migration tracking.',
+      'Developed BPMN workflows to improve usability and operational visibility for internal users.',
+      'Tech Stack: Java, React, Hadoop, Flink, Snowflake'
+    ]
+  },
+  {
+    role: 'Automation and Research Workflows',
+    org: 'Lysto.io',
+    date: 'Feb 2025 - Jan 2026',
+    points: [
+      'Automated daily market analysis through custom n8n workflows integrating Firecrawl for extraction and Supabase for storage.',
+      'Enabled non-technical users to execute research with minimal interaction via a low-code dashboard.',
+      'Tech Stack: n8n, Firecrawl, Supabase, Tailwind, Next.js'
+    ]
+  },
+  {
+    role: 'Backend Engineer',
+    org: 'Better Trader',
+    date: 'Jan 2025',
+    points: [
+      'Built and deployed Flask APIs to analyze cognitive biases in traders using historical trade and order-flow data.',
+      'Developed a Streamlit dashboard to visualize psychological patterns and behavioral metrics.',
+      'Tech Stack: Flask, Streamlit, Python'
+    ]
+  },
+  {
+    role: 'Prompt Engineer',
+    org: 'NeanderAI',
+    date: 'Nov 2024',
+    points: [
+      'Engineered an LLM-driven finite state machine framework to simulate dynamic software walkthroughs.',
+      'Created prompt-to-action mappings for seamless transitions in video demonstrations.',
+      'Tech Stack: LangChain, Node.js'
+    ]
+  },
+  {
+    role: 'Google Summer of Code Contributor',
+    org: 'Inkscape',
+    date: 'May 2024 - Aug 2024',
+    points: [
+      'Re-implemented UX and workflow for the Node and Pen Tool, reducing tool-switching friction and improving usability.',
+      'Optimized Bezier curve rendering through algorithmic tuning.',
+      'Tech Stack: Gtkmm, C++'
+    ]
+  }
+];
+
+const projectLinks = [
+  ['Redis Clone', 'https://github.com/SK1PPR/redis'],
+  ['Vector DB', 'https://github.com/sdslabs/vector-db'],
+  ['Game Boy Emulator', 'https://github.com/SK1PPR/GB-EM'],
+  ['SIC/XE Assembler', 'https://github.com/SK1PPR/SIC-XE-ASSEMBLER'],
+  ['Chip-8 Emulator', 'https://github.com/SK1PPR/Chip8-Emulator'],
+  ['Torrent Client', 'https://github.com/SK1PPR/torrent-client']
+];
+---
+
+<BaseLayout title="Resume" description="Experience, education, skills, projects, and downloadable resume for Khushal Agrawal.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Resume</p>
+        <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Khushal Agrawal</h1>
+        <p class="mt-4 text-lg text-[var(--muted)]">Distributed Systems & Infrastructure Engineer</p>
+        <p class="mt-2 text-sm text-[var(--muted)]">Roorkee, India / agrawalkhushal04@gmail.com / +91 82697 88323</p>
+      </div>
+      <a class="w-fit rounded bg-[var(--text)] px-4 py-2 text-sm text-[var(--bg)]" href="/resume.pdf" download>Download PDF</a>
+    </div>
+    <div class="mt-10 grid gap-4 lg:grid-cols-[1fr_18rem]">
+      <div class="space-y-4">
+        <section class="notebook-panel rounded-md p-5">
+          <h2 class="text-xl font-semibold">Experience</h2>
+          <div class="mt-5 space-y-5">
+            {experiences.map((experience) => (
+              <article class="border-t border-[var(--line)] pt-4 first:border-t-0 first:pt-0">
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between">
+                  <h3 class="font-semibold">{experience.org}: {experience.role}</h3>
+                  <p class="font-mono text-xs text-[var(--muted)]">{experience.date}</p>
+                </div>
+                <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-[var(--muted)]">
+                  {experience.points.map((point) => <li>{point}</li>)}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section class="notebook-panel rounded-md p-5">
+          <h2 class="text-xl font-semibold">Projects</h2>
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            {projectLinks.map(([name, href]) => (
+              <a class="rounded border border-[var(--line)] px-3 py-2 text-sm text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--text)]" href={href}>{name}</a>
+            ))}
+          </div>
+        </section>
+        <section class="notebook-panel rounded-md p-5">
+          <h2 class="text-xl font-semibold">Education</h2>
+          <p class="mt-3 text-[var(--muted)]">
+            Indian Institute of Technology, Roorkee / B.Tech in Computer Science and Engineering / Oct 2022 - June 2026 / GPA: 8.8/10.0
+          </p>
+          <p class="mt-3 text-sm leading-6 text-[var(--muted)]">
+            Coursework: Compiler Design, Computer Architecture, Operating Systems, Data Structures and Algorithms, Systems Software, Software Engineering, Object Oriented Analysis and Design, Network Theory, Principles of Programming Languages, Artificial Intelligence, Database Management Systems.
+          </p>
+        </section>
+        <section class="notebook-panel rounded-md p-5">
+          <h2 class="text-xl font-semibold">Achievements and Awards</h2>
+          <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-[var(--muted)]">
+            <li>Gold Medal in Inter-IIT Tech Meet 2023, IGDC problem statement.</li>
+            <li>Bronze Medal as PS-Lead in Inter-IIT Tech Meet 2024, IGDC problem statement.</li>
+            <li>1592 rated on Codeforces.</li>
+            <li>2nd in India in CSAW Embedded Security Challenge.</li>
+            <li>Winner of Alphagrep Scholarship AY 2024.</li>
+            <li>JEE Advanced 2022 rank 337 among 150,000 participants.</li>
+          </ul>
+        </section>
+      </div>
+      <aside class="notebook-panel rounded-md p-5">
+        <h2 class="text-xl font-semibold">Skills</h2>
+        <div class="mt-4 flex flex-wrap gap-2">
+          {['Rust', 'C++', 'Python', 'C', 'Bash', 'Java', 'RocksDB', 'Flink', 'Hadoop', 'Snowflake', 'Git', 'Linux', 'GDB', 'Perf', 'Docker', 'Unity', 'Unreal', 'Godot'].map((skill) => (
+            <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)]">{skill}</span>
+          ))}
+        </div>
+        <h2 class="mt-8 text-xl font-semibold">Links</h2>
+        <div class="mt-4 grid gap-2 text-sm text-[var(--muted)]">
+          <a class="hover:text-[var(--text)]" href="https://github.com/SK1PPR">GitHub</a>
+          <a class="hover:text-[var(--text)]" href="https://gitlab.com/SK1PPR">GitLab</a>
+          <a class="hover:text-[var(--text)]" href="https://linkedin.com/in/khushal-agrawal/">LinkedIn</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>

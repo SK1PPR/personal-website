@@ -1,0 +1,35 @@
+---
+title: "Vector DB"
+description: "A multimodal vector database engine in Rust using RocksDB for storage, custom embedding modules, KD-Tree indexing, and KNN search."
+category: "Databases"
+status: "prototype"
+github: "https://github.com/sdslabs/vector-db"
+featured: true
+order: 2
+---
+
+## Architecture Overview
+
+Vector DB stores embeddings and metadata in RocksDB, then exposes vector search through custom indexing and retrieval components.
+
+The project explores a compact database architecture: persistent storage, embedding generation hooks, indexing structures, and terminal-first interaction.
+
+## Technical Challenges
+
+- storage layout for vectors and metadata
+- KD-Tree construction and query performance
+- KNN search implementation tradeoffs
+- module boundaries for custom embedding generation
+- terminal UI ergonomics for inspecting database state
+
+## Benchmarks
+
+The key measurements are index build time, query latency, recall quality, and RocksDB storage overhead as vector counts grow.
+
+## Lessons Learned
+
+Vector search systems are database systems first: storage layout, indexing strategy, and observability matter as much as the embedding model.
+
+## Tools
+
+Rust, Ratatui, RocksDB

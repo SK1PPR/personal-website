@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+import { formatDate, readingTime, sortByDate } from '@/utils/content';
+
+const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft));
+---
+
+<BaseLayout title="Blog" description="Technical writing and engineering notes on distributed systems, Linux, observability, and AI infrastructure.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Engineering notes</p>
+    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Blog</h1>
+    <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">
+      Long-form notes on internals, tradeoffs, failures, measurements, and the useful edges of infrastructure work.
+    </p>
+    <div class="mt-10 grid gap-4">
+      {posts.map((post) => (
+        <Card href={`/blog/${post.slug}/`} title={post.data.title} meta={`${formatDate(post.data.pubDate)} / ${readingTime(post.body)}`} description={post.data.description}>
+          <div class="mt-4 flex flex-wrap gap-2">
+            {post.data.tags.map((tag) => <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)]">{tag}</span>)}
+          </div>
+        </Card>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

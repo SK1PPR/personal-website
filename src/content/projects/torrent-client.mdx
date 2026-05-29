@@ -1,0 +1,29 @@
+---
+title: "Torrent Client"
+description: "A C++ torrent client with torrent file parsing, custom bencode encoding/decoding, peer connections, and networking logic."
+category: "Networking"
+status: "complete"
+github: "https://github.com/SK1PPR/torrent-client"
+featured: false
+order: 6
+---
+
+## Architecture Overview
+
+The client parses torrent metadata, decodes bencoded structures, manages peer connections, and implements the networking pieces needed to exchange data with peers.
+
+## Technical Challenges
+
+- bencode parser and encoder design
+- torrent metadata extraction
+- peer-to-peer connection handling
+- networking state transitions
+- robustness around malformed inputs
+
+## Lessons Learned
+
+Torrent clients are compact distributed systems: protocol parsing, peer discovery, partial failure, and transfer state all interact.
+
+## Tools
+
+C++

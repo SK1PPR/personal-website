@@ -1,0 +1,35 @@
+---
+title: "Redis Clone"
+description: "An in-memory key-value store in Rust with RESP protocol parsing, string commands, pub/sub, async networking, and an event-driven architecture."
+category: "Databases"
+status: "active"
+github: "https://github.com/SK1PPR/redis"
+featured: true
+order: 1
+---
+
+## Architecture Overview
+
+The Redis clone is built as a TCP server that accepts RESP-encoded commands, parses requests into command frames, executes them against an in-memory store, and writes RESP responses back to clients.
+
+The implementation emphasizes a small systems surface: async Rust for concurrency, event-driven I/O for connection handling, and explicit command dispatch for predictable behavior.
+
+## Technical Challenges
+
+- RESP protocol parsing and serialization
+- connection state management over TCP
+- pub/sub channel fan-out
+- command execution without unnecessary shared-state complexity
+- keeping the implementation readable while preserving systems-level control
+
+## Benchmarks
+
+The next benchmark target is a local harness that measures SET/GET throughput, pub/sub fan-out latency, connection scaling, and memory usage under mixed command workloads.
+
+## Lessons Learned
+
+Redis-style systems are valuable because the boundary is crisp: parse a wire protocol, maintain predictable in-memory state, and make the hot path short.
+
+## Tools
+
+Rust, Tokio, Mio, Async-std

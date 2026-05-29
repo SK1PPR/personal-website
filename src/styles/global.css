@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --panel: #ffffff;
+  --text: #171713;
+  --muted: #717063;
+  --line: #d9d7cc;
+  --accent: #16a34a;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --bg: #0d0e0b;
+  --panel: #151611;
+  --text: #f2f1ea;
+  --muted: #aaa79a;
+  --line: #2d2e27;
+  --accent: #22c55e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--line) 35%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 35%, transparent) 1px, transparent 1px),
+    var(--bg);
+  background-size: 44px 44px;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+a {
+  color: inherit;
+}
+
+.notebook-panel {
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+}
+
+.prose-engineering {
+  color: var(--text);
+  line-height: 1.75;
+}
+
+.prose-engineering :where(h2, h3) {
+  scroll-margin-top: 6rem;
+  line-height: 1.2;
+}
+
+.prose-engineering h2 {
+  margin-top: 2.5rem;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.prose-engineering h3 {
+  margin-top: 2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.prose-engineering p,
+.prose-engineering ul,
+.prose-engineering ol {
+  margin-top: 1rem;
+}
+
+.prose-engineering a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose-engineering code:not(pre code) {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  font-size: 0.9em;
+}
+
+.prose-engineering pre {
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 0.88rem;
+}

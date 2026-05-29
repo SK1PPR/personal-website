@@ -1,0 +1,20 @@
+---
+title: "eBPF Syscall Latency Tracing"
+description: "Tracing experiment for syscall duration histograms across a local service under load."
+area: "Linux internals"
+status: "planned"
+updated: 2026-05-04
+tags: ["ebpf", "syscalls", "latency"]
+---
+
+## Question
+
+Can syscall histograms explain p99 request latency without adding application-level tracing?
+
+## Plan
+
+Attach probes to read, write, epoll, futex, and network-related tracepoints. Compare histograms with application latency under controlled load.
+
+## Constraints
+
+The probe must avoid per-event logging on hot paths and should emit aggregated histograms.

@@ -1,0 +1,20 @@
+---
+title: "Consistent Hashing Ring"
+description: "A small experiment measuring key movement, virtual nodes, and load spread across membership changes."
+area: "Distributed systems"
+status: "reproducible"
+updated: 2026-05-18
+tags: ["hashing", "load-balancing", "membership"]
+---
+
+## Question
+
+How many keys move when a node joins or leaves, and how much do virtual nodes improve distribution?
+
+## Setup
+
+Generate one million keys, map them onto a ring, vary the virtual node count, and compare key movement and per-node load.
+
+## Expected Result
+
+More virtual nodes should reduce skew, while membership changes should move only the keys adjacent to changed ring positions.

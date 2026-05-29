@@ -1,0 +1,18 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Now" description="Current engineering work, learning focus, experiments, and open-source priorities.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Current state</p>
+    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Now</h1>
+    <div class="mt-10 max-w-reading notebook-panel rounded-md p-6">
+      <ul class="space-y-4 text-lg leading-8 text-[var(--muted)]">
+        <li>Building a Redis clone in Rust with RESP parsing, async networking, and pub/sub.</li>
+        <li>Reading <cite>Designing Data-Intensive Applications</cite>.</li>
+        <li>Exploring vector database internals with RocksDB, KD-Tree indexing, and KNN search.</li>
+        <li>Working through emulator architecture, instruction decoding, and low-level graphics loops.</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

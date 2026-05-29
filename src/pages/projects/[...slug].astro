@@ -1,0 +1,26 @@
+---
+import { getCollection, render } from 'astro:content';
+import ContentLayout from '@/layouts/ContentLayout.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({ params: { slug: project.slug }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { Content, headings } = await render(project);
+---
+
+<ContentLayout title={project.data.title} description={project.data.description} eyebrow={`${project.data.category} / ${project.data.status}`}>
+  <Fragment slot="aside">
+    <p class="font-mono text-xs uppercase tracking-[0.16em] text-[var(--accent)]">Project</p>
+    <p class="mt-4">{project.data.category}</p>
+    {project.data.github && <a class="mt-3 block text-[var(--accent)]" href={project.data.github}>GitHub</a>}
+    <ol class="mt-6 space-y-2">
+      {headings.filter((heading) => heading.depth === 2).map((heading) => (
+        <li><a class="hover:text-[var(--text)]" href={`#${heading.slug}`}>{heading.text}</a></li>
+      ))}
+    </ol>
+  </Fragment>
+  <Content />
+</ContentLayout>

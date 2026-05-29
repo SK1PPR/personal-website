@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/consts';
+---
+
+<BaseLayout title="Contact" description="Contact Khushal Agrawal by email or social links.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Contact</p>
+    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Contact</h1>
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      <a class="notebook-panel rounded-md p-5 hover:border-[var(--accent)]" href={`mailto:${SITE.email}`}>Email<br /><span class="text-[var(--muted)]">{SITE.email}</span></a>
+      <a class="notebook-panel rounded-md p-5 hover:border-[var(--accent)]" href={`tel:${SITE.phone.replaceAll(' ', '')}`}>Phone<br /><span class="text-[var(--muted)]">{SITE.phone}</span></a>
+      <a class="notebook-panel rounded-md p-5 hover:border-[var(--accent)]" href={SITE.github}>GitHub<br /><span class="text-[var(--muted)]">github.com/SK1PPR</span></a>
+      <a class="notebook-panel rounded-md p-5 hover:border-[var(--accent)]" href={SITE.gitlab}>GitLab<br /><span class="text-[var(--muted)]">gitlab.com/SK1PPR</span></a>
+      <a class="notebook-panel rounded-md p-5 hover:border-[var(--accent)]" href={SITE.linkedin}>LinkedIn<br /><span class="text-[var(--muted)]">linkedin.com/in/khushal-agrawal</span></a>
+      <a class="notebook-panel rounded-md p-5 hover:border-[var(--accent)]" href={SITE.twitter}>X/Twitter<br /><span class="text-[var(--muted)]">@khushalSkippr</span></a>
+    </div>
+  </section>
+</BaseLayout>

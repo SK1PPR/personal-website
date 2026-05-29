@@ -1,0 +1,28 @@
+---
+title: "SIC/XE Assembler with Control Sections"
+description: "A C++ two-pass assembler for SIC/XE with control section support, object code generation, SYMTAB, and CTAB handling."
+category: "Compilers"
+status: "complete"
+github: "https://github.com/SK1PPR/SIC-XE-ASSEMBLER"
+featured: false
+order: 4
+---
+
+## Architecture Overview
+
+The assembler uses a two-pass design. The first pass builds symbol and control-section tables, while the second pass emits object code using the resolved addresses and metadata.
+
+## Technical Challenges
+
+- parsing assembly input
+- tracking symbols across control sections
+- object code generation
+- handling SYMTAB and CTAB correctness
+
+## Lessons Learned
+
+Assembler projects make linking, relocation, and object formats concrete in a way that compiler theory alone often does not.
+
+## Tools
+
+C++

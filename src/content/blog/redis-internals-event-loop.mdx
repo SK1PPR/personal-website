@@ -1,0 +1,36 @@
+---
+title: "Redis Internals: The Event Loop as a Systems Primitive"
+description: "A concise walkthrough of how Redis uses a single-threaded event loop, multiplexed I/O, and careful data structure choices to stay predictable under load."
+pubDate: 2026-05-20
+tags: ["redis", "linux", "performance", "databases"]
+---
+
+## Why Redis Feels Fast
+
+Redis is often described as "single threaded", but the more useful framing is that Redis keeps the hot path easy to reason about. Network I/O is multiplexed, command execution is serialized, and the data structures are chosen so common operations have predictable costs.
+
+## Event Loop Shape
+
+At a high level the server repeats a small loop:
+
+```c
+while (!shutdown) {
+  process_timers();
+  poll_ready_file_descriptors();
+  read_queries();
+  execute_commands();
+  flush_replies();
+}
+```
+
+The model removes many classes of lock contention. The tradeoff is that long-running commands become visible as latency spikes for unrelated clients.
+
+## Practical Lessons
+
+Operationally, Redis performance work usually starts with command mix, value size, memory pressure, and persistence configuration. The implementation is fast because it makes the common path short, but production behavior is still shaped by workload design.
+
+## Questions To Explore
+
+- How do persistence settings change tail latency?
+- When does I/O threading help?
+- Which commands should be isolated behind separate instances?

@@ -1,0 +1,32 @@
+---
+title: "Kafka Architecture Notes: Logs, Segments, and Consumer Lag"
+description: "Engineering notes on Kafka's log-oriented architecture, segment lifecycle, replication, and why consumer lag is an operational signal rather than just a metric."
+pubDate: 2026-05-13
+tags: ["kafka", "distributed-systems", "storage"]
+---
+
+## The Log Is The Interface
+
+Kafka's core abstraction is an append-only log partition. Producers append records, brokers persist them in segment files, and consumers advance offsets independently.
+
+This separation lets Kafka support fan-out, replay, and decoupled producers and consumers without turning the broker into an application-aware queue.
+
+## Segment Lifecycle
+
+Segments bound operational work. A broker can roll, index, compact, delete, and replicate chunks of the log without treating the whole partition as one mutable object.
+
+```text
+topic/partition-0
+  00000000000000000000.log
+  00000000000000000000.index
+  00000000000001048576.log
+  00000000000001048576.index
+```
+
+## Consumer Lag
+
+Lag is not just "bad when high". It is a measurement of how much unprocessed history exists between committed offsets and the end of the partition. Interpreting it requires throughput, retention, partition balance, and consumer behavior.
+
+## Takeaway
+
+Kafka is durable infrastructure because it keeps the broker contract narrow: store ordered bytes, replicate them, expose offsets, and let consumers own progress.

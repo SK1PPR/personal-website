@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+import { formatDate } from '@/utils/content';
+
+const experiments = (await getCollection('lab')).sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf());
+---
+
+<BaseLayout title="Systems Lab" description="Experiments and research notes for distributed systems, storage, Linux internals, and performance engineering.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Systems laboratory</p>
+    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Systems Lab</h1>
+    <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">
+      Small experiments, reproducible notes, and implementation sketches. Each entry starts with a question, an instrumented prototype, and measured behavior.
+    </p>
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      {experiments.map((entry) => (
+        <Card href={`/lab/${entry.slug}/`} title={entry.data.title} meta={`${entry.data.area} / ${entry.data.status} / ${formatDate(entry.data.updated)}`} description={entry.data.description} />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

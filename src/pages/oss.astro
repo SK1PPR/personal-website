@@ -1,0 +1,31 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+
+const contributions = [
+  ['Google Summer of Code / Inkscape', 'Re-implemented Node and Pen Tool UX workflows and optimized Bezier curve rendering using C++ and Gtkmm.'],
+  ['SDSLabs', 'Developer at IIT Roorkee student group, contributing to internal and public-facing technical applications.'],
+  ['Systems Projects', 'Maintains public Rust and C++ systems projects spanning databases, emulators, assemblers, and networking.']
+];
+---
+
+<BaseLayout title="OSS Contributions" description="Open-source contribution summaries, pull requests, issues resolved, and project notes.">
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Open source</p>
+    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">OSS Contributions</h1>
+    <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">
+      A running ledger of upstream and community engineering work: GSoC contributions, student developer group work, and public systems projects.
+    </p>
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+      {contributions.map(([title, description]) => <Card title={title} description={description} />)}
+    </div>
+    <div class="mt-8 notebook-panel rounded-md p-5">
+      <h2 class="text-xl font-semibold">Contribution Log</h2>
+      <ul class="mt-4 space-y-3 text-[var(--muted)]">
+        <li><span class="font-mono text-[var(--accent)]">GSoC</span> Inkscape Node and Pen Tool workflow improvements.</li>
+        <li><span class="font-mono text-[var(--accent)]">Perf</span> Bezier curve rendering optimizations in C++.</li>
+        <li><span class="font-mono text-[var(--accent)]">SDSLabs</span> Technical applications, hackathon culture, and student-led engineering.</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

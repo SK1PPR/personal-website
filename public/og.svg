@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0d0e0b"/>
+  <path d="M0 90h1200M0 180h1200M0 270h1200M0 360h1200M0 450h1200M0 540h1200M120 0v630M240 0v630M360 0v630M480 0v630M600 0v630M720 0v630M840 0v630M960 0v630M1080 0v630" stroke="#25271f" stroke-width="1"/>
+  <rect x="96" y="96" width="1008" height="438" rx="8" fill="#151611" stroke="#34362d"/>
+  <text x="140" y="188" fill="#22c55e" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="28">khushal@systems:~$ whoami</text>
+  <text x="140" y="292" fill="#f2f1ea" font-family="ui-sans-serif, system-ui, sans-serif" font-size="72" font-weight="700">Khushal Agrawal</text>
+  <text x="140" y="372" fill="#aaa79a" font-family="ui-sans-serif, system-ui, sans-serif" font-size="38">Distributed Systems &amp; Infrastructure Engineer</text>
+  <text x="140" y="452" fill="#aaa79a" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="25">distributed systems / observability / ai runtime infra / oss</text>
+</svg>

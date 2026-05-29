@@ -1,0 +1,33 @@
+---
+title: "Game Boy Emulator"
+description: "A Rust emulator for the original Game Boy architecture, including CPU work, picture processing, instruction decoding, and SDL rendering."
+category: "Systems programming"
+status: "active"
+github: "https://github.com/SK1PPR/GB-EM"
+featured: true
+order: 3
+---
+
+## Architecture Overview
+
+The emulator models the Game Boy as a set of cooperating hardware components: CPU, memory, instruction decoder, picture processing unit, timers, and SDL-backed rendering.
+
+## Technical Challenges
+
+- decoding and executing the instruction set
+- coordinating CPU and PPU timing
+- modeling memory-mapped hardware behavior
+- rendering frames through SDL
+- validating behavior against ROM expectations
+
+## Benchmarks
+
+Useful measurements include instruction throughput, frame pacing, rendering stability, and compatibility against small test ROMs.
+
+## Lessons Learned
+
+Emulators are a forcing function for precision. Small timing or state-machine mistakes tend to surface quickly as visible rendering or execution bugs.
+
+## Tools
+
+Rust, SDL

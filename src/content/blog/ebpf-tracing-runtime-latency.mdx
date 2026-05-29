@@ -1,0 +1,30 @@
+---
+title: "eBPF Tracing Notes for Runtime Latency"
+description: "A practical outline for using eBPF to observe syscall latency, scheduler pressure, and runtime behavior with minimal application changes."
+pubDate: 2026-05-02
+tags: ["ebpf", "linux", "observability", "performance"]
+---
+
+## Observation Without Rebuilds
+
+eBPF is useful when the system is already running and the question lives below the application boundary. It can attach to kernel tracepoints, uprobes, kprobes, and perf events to expose behavior that logging rarely captures.
+
+## Useful Signals
+
+- syscall duration histograms
+- scheduler run queue pressure
+- TCP retransmits and connection churn
+- block I/O latency
+- allocator and runtime hotspots
+
+## Minimal Probe Sketch
+
+```bash
+bpftrace -e 'tracepoint:syscalls:sys_enter_write { @[comm] = count(); }'
+```
+
+This is not a full observability strategy. It is a fast way to move from suspicion to evidence.
+
+## Production Constraint
+
+Keep probes narrow, measure overhead, and prefer histograms over per-event logging when the workload is hot.

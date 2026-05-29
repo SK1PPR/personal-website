@@ -1,0 +1,29 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow?: string;
+}
+
+const { title, description, eyebrow } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} type="article">
+  <article class="mx-auto grid max-w-page gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_16rem]">
+    <div class="min-w-0">
+      {eyebrow && <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">{eyebrow}</p>}
+      <h1 class="max-w-4xl text-4xl font-semibold tracking-normal sm:text-5xl">{title}</h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">{description}</p>
+      <div class="prose-engineering mt-10 max-w-reading">
+        <slot />
+      </div>
+    </div>
+    <aside class="hidden lg:block">
+      <div class="sticky top-28 notebook-panel rounded-md p-4 text-sm text-[var(--muted)]">
+        <slot name="aside" />
+      </div>
+    </aside>
+  </article>
+</BaseLayout>
