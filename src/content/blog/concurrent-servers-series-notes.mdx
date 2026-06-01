@@ -1,0 +1,192 @@
+---
+title: "Concurrent Servers: Notes on Threads, Event Loops, libuv, Redis, and async/await"
+description: "A series-level writeup from Eli Bendersky's concurrent servers articles, tracing the design space from sequential sockets to threads, event-driven I/O, libuv, Redis, and async/await."
+pubDate: 2026-06-01
+tags: ["network-programming", "concurrency", "event-loops", "redis", "systems"]
+---
+
+I read Eli Bendersky's six-part series on concurrent servers:
+
+- [Part 1 - Introduction](https://eli.thegreenplace.net/2017/concurrent-servers-part-1-introduction/)
+- [Part 2 - Threads](https://eli.thegreenplace.net/2017/concurrent-servers-part-2-threads.html)
+- [Part 3 - Event-driven](https://eli.thegreenplace.net/2017/concurrent-servers-part-3-event-driven/)
+- [Part 4 - libuv](https://eli.thegreenplace.net/2017/concurrent-servers-part-4-libuv/)
+- [Part 5 - Redis case study](https://eli.thegreenplace.net/2017/concurrent-servers-part-5-redis-case-study/)
+- [Part 6 - Callbacks, Promises and async/await](https://eli.thegreenplace.net/2018/concurrent-servers-part-6-callbacks-promises-and-asyncawait/)
+
+The series is useful because it does not start with a framework or a fashionable runtime. It starts with the real baseline: a socket server, a tiny stateful protocol, and the question of what happens when more than one client shows up.
+
+My main takeaway: concurrency is not one technique. It is a resource-management problem. Threads, event loops, worker pools, and async syntax are different ways to keep the server making progress while clients, disks, databases, or computations take time.
+
+## The Protocol Comes First
+
+The same toy protocol is used throughout the series. A client connects, the server sends an initial marker, and then the client sends delimited messages. The server echoes message bytes back after transforming them.
+
+The protocol is intentionally small, but it contains the important systems detail: it is stateful.
+
+The server cannot assume that one `recv` call equals one application message. TCP is a byte stream. A read can contain half a message, multiple messages, or arbitrary fragments. So even before concurrency enters the picture, the server already needs a per-connection state machine.
+
+That detail matters because every concurrency model has to preserve this state somewhere:
+
+- a stack frame in a blocking sequential server
+- per-thread state in a threaded server
+- per-client heap state in an event loop
+- closure state in callback-heavy code
+- suspended function state in async/await
+
+Different models move the state around, but they do not remove it.
+
+## Sequential Server: The Baseline
+
+The first server accepts one connection and serves it until the client disconnects.
+
+```c
+while (1) {
+  int client = accept(listener, ...);
+  serve_connection(client);
+}
+```
+
+This version is valuable because it is easy to understand. The control flow is direct, errors are local, and the protocol state machine can live naturally inside `serve_connection`.
+
+The failure mode is also obvious: one slow client blocks everyone else.
+
+If the current client pauses between writes, the server is mostly idle. But it still cannot serve another client because it is blocked inside the current connection. This is the core motivation for concurrent servers: not raw CPU parallelism, but useful progress while other work is waiting.
+
+## Thread Per Connection
+
+The threaded version keeps the blocking programming model but gives each client its own thread. The main thread keeps accepting connections, and every accepted socket gets handed to a worker thread.
+
+The advantage is simplicity. The per-client code still looks sequential:
+
+```c
+void* thread_main(void* arg) {
+  serve_connection(client_socket);
+}
+```
+
+For many servers, this is a perfectly reasonable model. It maps well to the way humans read code: do one thing, wait, continue, return.
+
+The cost is resource usage. Threads need stacks, scheduling, and kernel involvement. One thread per client can collapse under enough connections, even if most of those clients are idle. That is why a thread pool is usually a better version of this idea.
+
+With a pool, concurrency becomes bounded. If the pool has 8 workers, at most 8 client tasks are active. The rest wait. This is not just an optimization; it is a load-shedding and rate-limiting mechanism.
+
+## Event-Driven Servers
+
+The event-driven model makes a different tradeoff. Instead of assigning a thread to each client, one thread watches many sockets and reacts only when a socket is ready.
+
+The server waits on an I/O multiplexing primitive like `select` or `epoll`, then dispatches small callbacks:
+
+```c
+while (1) {
+  events = wait_for_ready_fds();
+  for (event in events) {
+    handle_event(event);
+  }
+}
+```
+
+This can handle many idle clients efficiently because idle connections do not occupy threads. A client only consumes CPU when it has something ready to read or write.
+
+The tradeoff is that application code must be split into callbacks. A callback cannot block, because the event loop is the only thread making progress. If a callback sleeps, performs a long computation, or calls a blocking API, every client is stalled.
+
+This is where the protocol state machine becomes more explicit. In the sequential and threaded versions, state can live in local variables while the function blocks. In the event-driven version, the callback returns after each readiness event, so the connection state must be stored somewhere and resumed later.
+
+## select vs epoll
+
+The series uses `select` first because it is portable and easy to explain, but it has scaling limits.
+
+Two limits stand out:
+
+- fixed-size descriptor sets on many systems
+- inefficient scanning when only a small number of watched descriptors are ready
+
+`epoll` improves this on Linux by letting the kernel return the ready events directly. The server no longer has to scan an entire descriptor set just to find the few sockets that changed.
+
+The lesson is that event-driven design has two layers:
+
+- the programming model: callbacks and nonblocking I/O
+- the kernel mechanism: `select`, `poll`, `epoll`, `kqueue`, IOCP, etc.
+
+High-level frameworks usually hide the second layer, but their performance and semantics still come from it.
+
+## libuv
+
+`libuv` is the next step up the abstraction ladder. Instead of writing the event loop around `select` or `epoll` directly, the program registers callbacks with `libuv` and lets the library run the loop.
+
+The shape is the same:
+
+- register a callback for new connections
+- allocate per-client state
+- register a read callback
+- write responses asynchronously
+- clean up when the connection closes
+
+The important point is that `libuv` does not remove event-loop discipline. It makes the cross-platform machinery nicer, but callbacks still must not block.
+
+When blocking or CPU-heavy work is unavoidable, `libuv` uses a thread pool pattern: move the blocking work to a worker thread, then notify the event loop when the work is done. This hybrid model is common in real systems. The event loop handles readiness and coordination; threads handle work that would otherwise block the loop.
+
+## Redis as a Case Study
+
+Redis is the most interesting part of the series because it shows these ideas in production.
+
+Redis is famously fast while keeping the main command execution path mostly single-threaded. It achieves concurrency through an event loop rather than through one thread per client. Its `ae` event library wraps platform mechanisms like `epoll`, `kqueue`, and `select`.
+
+A client socket is set to nonblocking mode. Redis registers callbacks for read events, accumulates partial input in client-specific buffers, parses commands, prepares replies, and writes when sockets are ready.
+
+The design works because Redis keeps the common path short and avoids blocking the main loop. This is also why Redis is careful about operations like persistence and memory freeing. Work that could block the main loop can be moved into background I/O threads.
+
+The bigger lesson: single-threaded does not mean non-concurrent. Redis can handle many concurrent clients because concurrency is about overlapping waiting time, not necessarily running many pieces of command logic at the same instant.
+
+## Callbacks, Promises, and async/await
+
+The final part moves to JavaScript and Node.js, which is a natural place to talk about event-loop ergonomics.
+
+Raw callbacks work, but nested asynchronous operations quickly become hard to read. The data flow becomes inverted: instead of returning a value, a function receives a callback that receives the value later.
+
+Promises flatten the nesting into chains and centralize error handling with `catch`. They are still callback machinery underneath, but they provide a better composition model.
+
+`async` and `await` improve the syntax again. Code can read almost like blocking code:
+
+```js
+async function onConnData(data) {
+  try {
+    const cached = await redisGet(key);
+    const result = cached ?? await computeInWorker(data);
+    await redisSet(key, result);
+    conn.write(result);
+  } catch (err) {
+    console.error(err);
+  }
+}
+```
+
+The key is that `await` does not block the event loop like a normal synchronous wait. It suspends the current async function and lets the loop continue serving other events.
+
+So async/await is not a different concurrency model by itself. It is a language-level way to express event-driven control flow while making the code look closer to the sequential version.
+
+## How I Think About the Design Space
+
+After reading the whole series, I’d summarize the models like this:
+
+| Model | Strength | Cost |
+| --- | --- | --- |
+| Sequential | simplest control flow | one client blocks everyone |
+| Thread per client | simple per-client code | unbounded resource growth |
+| Thread pool | bounded concurrency | queueing and pool sizing |
+| Event loop | scales well for many idle connections | callbacks must never block |
+| libuv/framework loop | portable event abstraction | framework mental model |
+| Redis-style custom loop | minimal machinery for a specific system | more ownership of low-level code |
+| async/await | readable async control flow | still requires nonblocking discipline |
+
+The unifying idea is that servers spend a lot of time waiting. The concurrency model decides what the server is allowed to do while waiting.
+
+## My Takeaway
+
+The series made one thing very clear: the hard part is not just accepting multiple clients. The hard part is choosing where state lives, where waiting happens, and how the system prevents one slow operation from stopping unrelated work.
+
+Threads preserve simple control flow but consume more resources. Event loops scale idle connections well but force callbacks and explicit state. Frameworks like `libuv` hide platform differences but still require event-loop discipline. Redis shows that a carefully designed single-threaded event loop can be production-grade if the main path stays nonblocking. Async/await then brings the syntax back toward straight-line code without changing the underlying event-driven nature.
+
+For my own systems work, the practical lesson is:
+
+Start with the protocol state machine. Then choose the concurrency model that makes waiting explicit, bounds resource usage, and keeps the hot path understandable.
