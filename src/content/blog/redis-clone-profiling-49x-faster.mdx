@@ -1,0 +1,121 @@
+---
+title: "Building a Redis Clone in Rust, Then Making It 49x Faster With Profiling"
+description: "Benchmarking a Redis-compatible Rust server against Redis, profiling the slow paths, and using indexes to remove pathological scans."
+pubDate: 2026-06-06
+tags: ["redis", "rust", "performance", "profiling", "databases"]
+---
+
+I have been building a Redis-compatible server in Rust. It supports core Redis-style commands, RESP parsing, lists, sorted sets, streams, pub/sub, replication scaffolding, and geospatial commands.
+
+Once the server was working, I wanted to answer the uncomfortable question: how far is it from real Redis?
+
+So I added a small benchmark harness that runs the same pipelined RESP workloads against my server and a local `redis-server`.
+
+## Benchmark Setup
+
+Before getting into the numbers, a caveat: this is a local development benchmark, not an official Redis benchmark. The goal was to find bottlenecks in my implementation, not to claim that a toy clone is generally faster than Redis.
+
+The comparison used:
+
+- Redis server: `redis-server v=8.6.2 sha=f6c77b96 malloc=libc bits=64`
+- Redis CLI: `redis-cli 8.6.2`
+- Machine: Apple M2
+- OS: macOS / Darwin `25.5.0` arm64
+- Transport: local TCP loopback
+- Clone build: `cargo build --release`
+- Workload style: fixed pipelined RESP commands from a small Python harness
+
+The benchmark script starts my clone on one port, starts real Redis on another port, warms/prepares data for each workload, and then sends RESP commands with a fixed pipeline depth. For the main comparison below, I used `--count 2000 --pipeline 128`.
+
+![Redis clone vs Redis throughput](/blog/redis-performance/clone_vs_redis.svg)
+
+## The First Results
+
+The first comparison was useful, but the real value came from profiling. A few operations were dramatically slower at higher cardinalities:
+
+| workload | before | after | speedup |
+| --- | ---: | ---: | ---: |
+| `geodist` | 16,885 ops/s | 435,152 ops/s | 25.8x |
+| `zrank-tail` | 11,334 ops/s | 557,755 ops/s | 49.2x |
+| `geoadd` | 21,379 ops/s | 427,686 ops/s | 20.0x |
+| `set` | 227,652 ops/s | 525,456 ops/s | 2.3x |
+
+![Profile-guided speedups](/blog/redis-performance/profile_guided_speedups.svg)
+
+## What Profiling Found
+
+The slow paths were not mysterious once I sampled the process.
+
+`ZRANK` was walking the entire `BTreeSet` until it found the member:
+
+```rust
+for (idx, m) in zset.iter().enumerate() {
+    if m.member == member {
+        return Some(idx);
+    }
+}
+```
+
+`GEODIST` did two similar scans, one for each member. `GEOADD` scanned to check whether a member already existed, then scanned again to remove it when updating.
+
+There was also an embarrassingly good reminder in `SET`: I still had unconditional `println!` calls in the hot path. With enough writes, stdout became part of the database benchmark.
+
+## The Fix
+
+I kept the ordered `BTreeSet` for range operations, but added side indexes:
+
+- `member -> score` for direct `ZSCORE`, `GEOPOS`, `GEODIST`, and update checks.
+- `member -> rank` for `ZRANK`.
+- Lazy rank rebuilding so writes do not rebuild the whole rank map on every insert.
+
+I also removed the unconditional `println!` calls from `SET`.
+
+That changed the shape of the system. The server stopped behaving like "Redis, but every member lookup is a scan" and started behaving like a database with indexes.
+
+## Final Snapshot
+
+On a local run with `--count 2000 --pipeline 128` against Redis 8.6.2:
+
+| workload | clone ops/s | Redis ops/s | clone/Redis |
+| --- | ---: | ---: | ---: |
+| `set` | 428,155 | 511,024 | 83.78% |
+| `get-hot` | 432,561 | 513,457 | 84.24% |
+| `incr` | 483,345 | 519,413 | 93.06% |
+| `zadd` | 395,733 | 395,036 | 100.18% |
+| `zrank-tail` | 423,113 | 526,564 | 80.35% |
+| `geoadd` | 382,059 | 372,041 | 102.69% |
+| `geodist` | 389,348 | 494,912 | 78.67% |
+
+This is not "faster than Redis." It is a local benchmark on a limited clone, and Redis is doing a lot more than this project does. Some microbenchmarks look surprisingly close because my clone implements only a narrow slice of Redis behavior.
+
+But it is a satisfying milestone: the obvious pathological cases are gone, and the remaining gaps are more interesting.
+
+## What Is Still Slow?
+
+`GEOSEARCH` still scans every geo member before filtering. The next real optimization is geohash-cell candidate selection, so a radius query only checks plausible nearby members.
+
+The parser also allocates a `String` per RESP bulk argument. That is convenient, but not cheap. A more serious implementation would parse borrowed byte slices and only allocate where command execution requires ownership.
+
+## What Redis Still Does Better
+
+The point of this benchmark is not that my clone is now "Redis-fast." It is that the most obvious self-inflicted bottlenecks are gone. Real Redis still has a long list of optimizations that this project either only approximates or does not attempt yet.
+
+A few of the big ones I still want to learn from and add:
+
+- Compact internal encodings. Redis can store small lists, hashes, sets, and sorted sets in dense encodings such as listpack-style layouts before promoting them to larger structures. That reduces pointer chasing and memory overhead for small objects. See Redis' [`OBJECT ENCODING`](https://redis.io/docs/latest/commands/object-encoding/) and [memory optimization](https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/memory-optimization/) docs.
+- List storage. My list implementation is straightforward, but Redis lists use quicklist/listpack-style storage so many operations touch compact contiguous chunks rather than allocating one independent node per small value.
+- Sorted-set internals. This clone now has side indexes, but Redis sorted sets combine direct member lookup with ordered traversal in a mature implementation that handles encoding upgrades, score ordering, range queries, deletion, and memory ownership carefully.
+- Geo search candidate selection. My `GEOSEARCH` still scans broadly. Redis stores geo positions as geohash-like scores in sorted sets and narrows the search to plausible neighboring ranges before doing precise distance checks.
+- RESP parsing and output buffers. My parser is convenient Rust code that allocates owned strings. Redis has a highly tuned C protocol path, client query buffers, output buffers, and years of work around pipelined workloads. The [Redis pipelining docs](https://redis.io/docs/latest/develop/using-commands/pipelining/) are a useful reminder that network batching is part of the performance story.
+- Hash table and keyspace behavior. Redis has production-grade dictionary behavior, incremental resizing, expiration, eviction, persistence interactions, and latency controls. My clone has enough of the shape to learn from, but not the same operational machinery.
+- Memory management. My local Redis build reported `malloc=libc`, but Redis deployments often pay careful attention to allocator behavior, fragmentation, object layout, and background work. A clone that wants to stay fast at larger memory sizes has to care about this too.
+
+So the next phase is less about one benchmark number and more about replacing simple data structures with the kinds of adaptive representations Redis uses in production.
+
+## Takeaway
+
+Building the clone was the fun part. Profiling it was the humbling part.
+
+The biggest improvement did not come from clever Rust tricks. It came from looking at the flame graph, finding a linear scan hiding inside an operation that should feel indexed, and adding the missing data structure.
+
+That is the part of systems work I enjoy most: the code tells you what it wants to become.

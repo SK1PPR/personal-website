@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="688" viewBox="0 0 1100 688">
+<rect width="100%" height="100%" fill="#fbfaf7"/>
+<text x="40" y="42" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#1f2933">Redis clone vs Redis throughput</text>
+<text x="40" y="66" font-family="Inter, Arial, sans-serif" font-size="14" fill="#52616b">Commands/second, count=2000, pipeline=128. Higher is better.</text>
+<text x="40" y="104" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">ping</text>
+<rect x="150" y="84" width="760.0" height="14" fill="#d7dde2"/>
+<rect x="150" y="103" width="574.0" height="14" fill="#2f7dd1"/>
+<text x="926" y="96" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 768,443</text>
+<text x="926" y="115" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 580,404 (76%)</text>
+<text x="40" y="148" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">set</text>
+<rect x="150" y="128" width="505.4" height="14" fill="#d7dde2"/>
+<rect x="150" y="147" width="423.5" height="14" fill="#2f7dd1"/>
+<text x="926" y="140" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 511,024</text>
+<text x="926" y="159" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 428,155 (84%)</text>
+<text x="40" y="192" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">get-hot</text>
+<rect x="150" y="172" width="507.8" height="14" fill="#d7dde2"/>
+<rect x="150" y="191" width="427.8" height="14" fill="#2f7dd1"/>
+<text x="926" y="184" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 513,457</text>
+<text x="926" y="203" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 432,561 (84%)</text>
+<text x="40" y="236" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">incr</text>
+<rect x="150" y="216" width="513.7" height="14" fill="#d7dde2"/>
+<rect x="150" y="235" width="478.0" height="14" fill="#2f7dd1"/>
+<text x="926" y="228" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 519,413</text>
+<text x="926" y="247" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 483,345 (93%)</text>
+<text x="40" y="280" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">rpush</text>
+<rect x="150" y="260" width="416.5" height="14" fill="#d7dde2"/>
+<rect x="150" y="279" width="406.0" height="14" fill="#2f7dd1"/>
+<text x="926" y="272" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 421,138</text>
+<text x="926" y="291" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 410,481 (97%)</text>
+<text x="40" y="324" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">lpop</text>
+<rect x="150" y="304" width="494.5" height="14" fill="#d7dde2"/>
+<rect x="150" y="323" width="376.0" height="14" fill="#2f7dd1"/>
+<text x="926" y="316" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 499,995</text>
+<text x="926" y="335" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 380,195 (76%)</text>
+<text x="40" y="368" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">zadd</text>
+<rect x="150" y="348" width="390.7" height="14" fill="#d7dde2"/>
+<rect x="150" y="367" width="391.4" height="14" fill="#2f7dd1"/>
+<text x="926" y="360" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 395,036</text>
+<text x="926" y="379" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 395,733 (100%)</text>
+<text x="40" y="412" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">zrank-tail</text>
+<rect x="150" y="392" width="520.8" height="14" fill="#d7dde2"/>
+<rect x="150" y="411" width="418.5" height="14" fill="#2f7dd1"/>
+<text x="926" y="404" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 526,564</text>
+<text x="926" y="423" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 423,113 (80%)</text>
+<text x="40" y="456" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">geoadd</text>
+<rect x="150" y="436" width="368.0" height="14" fill="#d7dde2"/>
+<rect x="150" y="455" width="377.9" height="14" fill="#2f7dd1"/>
+<text x="926" y="448" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 372,041</text>
+<text x="926" y="467" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 382,059 (103%)</text>
+<text x="40" y="500" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">geopos-hot</text>
+<rect x="150" y="480" width="227.9" height="14" fill="#d7dde2"/>
+<rect x="150" y="499" width="189.8" height="14" fill="#2f7dd1"/>
+<text x="926" y="492" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 230,396</text>
+<text x="926" y="511" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 191,863 (83%)</text>
+<text x="40" y="544" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">geodist</text>
+<rect x="150" y="524" width="489.5" height="14" fill="#d7dde2"/>
+<rect x="150" y="543" width="385.1" height="14" fill="#2f7dd1"/>
+<text x="926" y="536" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 494,912</text>
+<text x="926" y="555" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 389,348 (79%)</text>
+<text x="40" y="588" font-family="Inter, Arial, sans-serif" font-size="14" fill="#1f2933">geosearch</text>
+<rect x="150" y="568" width="0.5" height="14" fill="#d7dde2"/>
+<rect x="150" y="587" width="0.5" height="14" fill="#2f7dd1"/>
+<text x="926" y="580" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis 498</text>
+<text x="926" y="599" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">Clone 472 (95%)</text>
+<rect x="150" y="640" width="16" height="10" fill="#2f7dd1"/><text x="172" y="649" font-family="Inter, Arial, sans-serif" font-size="12" fill="#1f2933">clone</text>
+<rect x="242" y="640" width="16" height="10" fill="#d7dde2"/><text x="264" y="649" font-family="Inter, Arial, sans-serif" font-size="12" fill="#52616b">Redis</text>
+</svg>
