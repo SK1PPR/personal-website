@@ -3,13 +3,23 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 
 const experiences = [
   {
+    role: 'Software Engineer',
+    org: 'Ambient Security',
+    date: 'Dec 2025 - Present',
+    points: [
+      'Work on infrastructure for petabyte-scale sensitive security data using Azure Event Hub and JanusGraph for event ingestion, graph modeling, and large-scale analysis workflows.',
+      'Optimize graph algorithms over large security datasets to improve query and analysis speed while maintaining detection accuracy.',
+      'Set up a Kong API gateway on an AKS cluster to support secure service routing and cloud infrastructure deployment.',
+      'Built a SailPoint ingestion connector and wrote end-to-end integration tests for a large security data workflow.'
+    ]
+  },
+  {
     role: "AI Prompt Engineer for Google's Gemini",
     org: 'Uber AI',
     date: 'Jan 2026 - Current',
     points: [
-      'Designed challenging evaluation tasks for Gemini within Terminal Bench and Colab Bench, targeting temporal reasoning, multimodal data integration, and physics-based inference.',
-      'Built rigorous test harnesses to verify agent trajectories and intermediate reasoning artifacts beyond final outputs.',
-      'Engineered tasks involving loss and failure analysis, anomaly detection, and signal decoding to identify capability gaps in LLM agents.',
+      'Designed evaluation tasks for Gemini within Terminal Bench and Colab Bench, targeting temporal reasoning, multimodal data integration, anomaly analysis, and physics-based inference.',
+      'Built Python, Jupyter, Docker, NumPy, and SciPy test harnesses to validate multi-step agent trajectories and intermediate artifacts.',
       'Tech Stack: Python, Jupyter, Docker, NumPy, SciPy'
     ]
   },
@@ -18,9 +28,9 @@ const experiences = [
     org: 'Goldman Sachs',
     date: 'June 2025 - Aug 2025',
     points: [
-      'Designed and implemented a data migration tool to transfer petabyte-scale in-house datasets to Snowflake using Apache Flink.',
-      'Built Java-based microservices with Jersey and integrated React components for real-time migration tracking.',
-      'Developed BPMN workflows to improve usability and operational visibility for internal users.',
+      'Designed and implemented a data migration tool for petabyte-scale in-house datasets to Snowflake using Apache Flink and Hadoop-backed processing.',
+      'Built Java/Jersey microservices and React status views to track migration progress, surface operational state, and improve visibility for internal data engineering users.',
+      'Developed BPMN workflows to simplify migration operations and reduce manual coordination across data platform users.',
       'Tech Stack: Java, React, Hadoop, Flink, Snowflake'
     ]
   },
@@ -59,8 +69,8 @@ const experiences = [
     org: 'Inkscape',
     date: 'May 2024 - Aug 2024',
     points: [
-      'Re-implemented UX and workflow for the Node and Pen Tool, reducing tool-switching friction and improving usability.',
-      'Optimized Bezier curve rendering through algorithmic tuning.',
+      'Reworked the Node and Pen Tool workflow in a large C++/Gtkmm open-source codebase, reducing tool-switching friction for vector graphics editing.',
+      'Optimized Bezier curve rendering paths through algorithmic improvements and performance-oriented C++ changes.',
       'Tech Stack: Gtkmm, C++'
     ]
   }
@@ -68,11 +78,9 @@ const experiences = [
 
 const projectLinks = [
   ['Redis Clone', 'https://github.com/SK1PPR/redis'],
-  ['Vector DB', 'https://github.com/sdslabs/vector-db'],
-  ['Game Boy Emulator', 'https://github.com/SK1PPR/GB-EM'],
-  ['SIC/XE Assembler', 'https://github.com/SK1PPR/SIC-XE-ASSEMBLER'],
-  ['Chip-8 Emulator', 'https://github.com/SK1PPR/Chip8-Emulator'],
-  ['Torrent Client', 'https://github.com/SK1PPR/torrent-client']
+  ['Kafka Clone', 'https://github.com/SK1PPR/kafka'],
+  ['VortexDB', 'https://github.com/sdslabs/VortexDB'],
+  ['C Compiler for MIPS', 'https://github.com/sanatan01/CSN-352-Project']
 ];
 ---
 
@@ -82,7 +90,7 @@ const projectLinks = [
       <div>
         <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Resume</p>
         <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Khushal Agrawal</h1>
-        <p class="mt-4 text-lg text-[var(--muted)]">Distributed Systems & Infrastructure Engineer</p>
+        <p class="mt-4 text-lg text-[var(--muted)]">Software Engineer - Data Infrastructure, Databases, Distributed Systems, Python/Rust/Linux</p>
         <p class="mt-2 text-sm text-[var(--muted)]">Roorkee, India / agrawalkhushal04@gmail.com / +91 82697 88323</p>
       </div>
       <a class="w-fit rounded bg-[var(--text)] px-4 py-2 text-sm text-[var(--bg)]" href="/resume.pdf" download>Download PDF</a>
@@ -119,7 +127,7 @@ const projectLinks = [
             Indian Institute of Technology, Roorkee / B.Tech in Computer Science and Engineering / Oct 2022 - June 2026 / GPA: 8.8/10.0
           </p>
           <p class="mt-3 text-sm leading-6 text-[var(--muted)]">
-            Coursework: Compiler Design, Computer Architecture, Operating Systems, Data Structures and Algorithms, Systems Software, Software Engineering, Object Oriented Analysis and Design, Network Theory, Principles of Programming Languages, Artificial Intelligence, Database Management Systems.
+            Coursework: Operating Systems, Computer Architecture, Compiler Design, Database Management Systems, Systems Software, Data Structures and Algorithms, Network Theory, Artificial Intelligence.
           </p>
         </section>
         <section class="notebook-panel rounded-md p-5">
@@ -137,7 +145,7 @@ const projectLinks = [
       <aside class="notebook-panel rounded-md p-5">
         <h2 class="text-xl font-semibold">Skills</h2>
         <div class="mt-4 flex flex-wrap gap-2">
-          {['Rust', 'C++', 'Python', 'C', 'Bash', 'Java', 'RocksDB', 'Flink', 'Hadoop', 'Snowflake', 'Git', 'Linux', 'GDB', 'Perf', 'Docker', 'Unity', 'Unreal', 'Godot'].map((skill) => (
+          {['Python', 'Rust', 'C++', 'C', 'Java', 'SQL', 'Bash', 'JavaScript', 'TypeScript', 'PostgreSQL', 'Kafka', 'Redis', 'RocksDB', 'Flink', 'Hadoop', 'Snowflake', 'JanusGraph', 'Azure Event Hub', 'Linux', 'Git', 'Docker', 'GDB', 'Perf', 'Nix', 'Jupyter', 'NumPy', 'SciPy'].map((skill) => (
             <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)]">{skill}</span>
           ))}
         </div>

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://khushalagrawal.dev/sitemap-index.xml
+Sitemap: https://khushal.net/sitemap-index.xml

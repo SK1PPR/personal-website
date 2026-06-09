@@ -1,0 +1,74 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+import Section from '@/components/Section.astro';
+import { SITE } from '@/consts';
+
+const profileJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  name: 'About Khushal Agrawal',
+  url: new URL('/about/', SITE.url).toString(),
+  mainEntity: {
+    '@type': 'Person',
+    name: SITE.author,
+    url: SITE.url,
+    sameAs: [SITE.github, SITE.gitlab, SITE.linkedin, SITE.twitter]
+  }
+};
+---
+
+<BaseLayout
+  title="About"
+  description="About Khushal Agrawal, a data infrastructure and distributed systems engineer focused on databases, systems programming, performance, and open-source software."
+  jsonLd={profileJsonLd}
+>
+  <section class="border-b border-[var(--line)]">
+    <div class="mx-auto max-w-page px-4 py-14 sm:px-6">
+      <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">About</p>
+      <h1 class="max-w-4xl text-4xl font-semibold tracking-normal sm:text-5xl">Khushal Agrawal</h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">
+        I am a Computer Science undergraduate at IIT Roorkee and a software engineer focused on data infrastructure, databases, distributed systems, and Python/Rust/Linux systems work. I like projects where the interesting work is close to the runtime: protocols, storage layouts, indexes, event loops, profiling, graph algorithms, and correctness edges.
+      </p>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-page px-4 sm:px-6">
+    <Section title="Current Direction" eyebrow="Focus">
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card title="Data Infrastructure" description="Distributed logs, ETL systems, graph workflows, stream processing, and database internals." />
+        <Card title="Systems Programming" description="Rust, C++, and Linux projects that expose protocol, storage, memory, and runtime tradeoffs." />
+        <Card title="Performance Engineering" description="Benchmarks, profiling, flame graphs, and hot-path simplification." />
+        <Card title="Open Source" description="GSoC, SDSLabs, and public systems projects under SK1PPR." />
+      </div>
+    </Section>
+
+    <Section title="Background" eyebrow="Resume snapshot">
+      <div class="grid gap-4 lg:grid-cols-[1fr_18rem]">
+        <div class="space-y-4">
+          <Card title="IIT Roorkee" meta="B.Tech CSE / 2022-2026" description="Coursework includes operating systems, compiler design, computer architecture, database systems, programming languages, and systems software." />
+          <Card title="Ambient Security" meta="Software Engineer" description="Working on infrastructure for petabyte-scale sensitive security data with Azure Event Hub, JanusGraph, graph algorithms, Kong, and AKS." />
+          <Card title="Goldman Sachs" meta="Summer Analyst" description="Built migration tooling for petabyte-scale internal datasets using Java, Flink, Hadoop, Snowflake, BPMN workflows, and React status views." />
+          <Card title="Uber AI" meta="Gemini evaluation" description="Designed Terminal Bench and Colab Bench tasks and Python/Jupyter/Docker test harnesses for multi-step agent evaluation." />
+          <Card title="Google Summer of Code" meta="Inkscape" description="Worked on Node and Pen Tool UX workflows and Bezier curve rendering performance using C++ and Gtkmm." />
+        </div>
+        <aside class="notebook-panel rounded-md p-5">
+          <h2 class="text-xl font-semibold">Links</h2>
+          <div class="mt-4 grid gap-3 text-sm text-[var(--muted)]">
+            <a class="hover:text-[var(--text)]" href={SITE.github}>GitHub</a>
+            <a class="hover:text-[var(--text)]" href={SITE.gitlab}>GitLab</a>
+            <a class="hover:text-[var(--text)]" href={SITE.linkedin}>LinkedIn</a>
+            <a class="hover:text-[var(--text)]" href={SITE.twitter}>X/Twitter</a>
+            <a class="hover:text-[var(--text)]" href="/resume/">Resume</a>
+          </div>
+        </aside>
+      </div>
+    </Section>
+
+    <Section title="What This Site Is" eyebrow="Notebook">
+      <p class="max-w-reading text-lg leading-8 text-[var(--muted)]">
+        This website is a public engineering notebook. Blog posts are written as technical notes, project pages are case studies, and lab entries are small experiments with implementation details and measurements.
+      </p>
+    </Section>
+  </div>
+</BaseLayout>

@@ -23,5 +23,6 @@ export const NAV = [
   ['OSS', '/oss'],
   ['Reading', '/reading'],
   ['Now', '/now'],
+  ['About', '/about'],
   ['Resume', '/resume']
 ] as const;

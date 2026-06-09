@@ -1,0 +1,33 @@
+---
+title: "C Compiler for MIPS"
+description: "A C/C++ compiler project targeting the MIPS instruction set, with lexical analysis, parsing, semantic checks, code generation, and assembly emission."
+category: "Compilers"
+status: "complete"
+github: "https://github.com/sanatan01/CSN-352-Project"
+featured: false
+order: 4
+---
+
+## Architecture Overview
+
+The compiler lowers a subset of C into MIPS assembly through the traditional compiler pipeline: lexical analysis, parsing, semantic checks, intermediate lowering, code generation, and final assembly emission.
+
+## Technical Challenges
+
+- parsing C syntax and validating semantic constraints
+- lowering expressions and control flow
+- handling function calls and stack frames
+- generating MIPS-compatible assembly
+- keeping code generation predictable across different language constructs
+
+## Benchmarks
+
+The primary validation path is correctness-focused: generated MIPS programs should preserve the behavior of the source C programs across expressions, branches, loops, functions, and stack interactions.
+
+## Lessons Learned
+
+Compiler projects make machine boundaries tangible. Function calls, stack layout, register use, and control flow stop being abstract once the output has to run as assembly.
+
+## Tools
+
+C, C++, compiler design, parsing, code generation, MIPS

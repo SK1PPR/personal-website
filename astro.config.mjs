@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://khushalagrawal.dev',
+  site: 'https://khushal.net',
   output: 'static',
   integrations: [
     mdx(),
