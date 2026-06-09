@@ -1,0 +1,175 @@
+---
+title: "Bloom Filter From Scratch"
+description: "A small Go implementation of a Bloom filter using a uint64 bitset, pluggable hash functions, FNV defaults, tests, and microbenchmarks."
+area: "Probabilistic data structures"
+status: "benchmarked"
+updated: 2026-06-09
+tags: ["bloom-filter", "go", "probabilistic", "performance"]
+---
+
+## Question
+
+How small can a useful Bloom filter implementation be while still exposing the core systems tradeoffs: compact memory, no false negatives, possible false positives, and hash-dependent performance?
+
+This lab implements the filter in Go under `github.com/SK1PPR/labs/bloom-filter`.
+
+## What A Bloom Filter Does
+
+A Bloom filter is a probabilistic membership data structure. It answers one question:
+
+> Have I probably seen this item before?
+
+It can return:
+
+- definitely not present
+- probably present
+
+It cannot return "definitely present", because different inputs can set the same bits. That collision behavior is the price paid for compact memory usage.
+
+The basic algorithm is:
+
+1. Allocate a bit array.
+2. Hash the input with `k` hash functions.
+3. For `Add`, set all `k` bit positions.
+4. For `Contains`, check all `k` positions.
+5. If any bit is missing, the item was never added.
+6. If every bit is set, the item may have been added.
+
+## Implementation Shape
+
+The implementation stores the bitset as `[]uint64` instead of `[]bool`, so each machine word stores 64 filter bits:
+
+```go
+type BloomFilter struct {
+    bitset []uint64
+    size   uint64
+    hash   []HashFunc
+}
+```
+
+Bit access is just word selection plus bit masking:
+
+```go
+func (f *BloomFilter) hasBit(pos uint64) bool {
+    word := pos / 64
+    bit := pos % 64
+    return (f.bitset[word] & (1 << bit)) != 0
+}
+
+func (f *BloomFilter) setBit(pos uint64) {
+    word := pos / 64
+    bit := pos % 64
+    f.bitset[word] |= 1 << bit
+}
+```
+
+The constructor accepts custom hash functions:
+
+```go
+type HashFunc func([]byte) uint64
+
+func New(size uint64, hashes ...HashFunc) *BloomFilter {
+    words := (size + 63) / 64
+
+    return &BloomFilter{
+        bitset: make([]uint64, words),
+        size:   size,
+        hash:   hashes,
+    }
+}
+```
+
+The default filter uses FNV-1a and FNV-1:
+
+```go
+func NewWithDefaults(size uint64) *BloomFilter {
+    return New(size, FNV1a, FNV1)
+}
+```
+
+## Add And Contains
+
+`Add` hashes the member and sets the corresponding bit for each hash function:
+
+```go
+func (f *BloomFilter) Add(member []byte) {
+    for _, hash := range f.hash {
+        pos := hash(member) % f.size
+        f.setBit(pos)
+    }
+}
+```
+
+`Contains` exits early as soon as any required bit is missing:
+
+```go
+func (f *BloomFilter) Contains(member []byte) bool {
+    for _, hash := range f.hash {
+        pos := hash(member) % f.size
+        if !f.hasBit(pos) {
+            return false
+        }
+    }
+
+    return true
+}
+```
+
+That early return is the key correctness property: if a bit was never set, the item cannot have been added by this filter.
+
+## Layered Filter
+
+The lab also includes a `LayeredFilter`, which composes multiple Bloom filters:
+
+```go
+type LayeredFilter struct {
+    filters []*BloomFilter
+}
+```
+
+Adding writes to every layer. Checking requires every layer to contain the item.
+
+This is not a standard replacement for tuning a single filter, but it is useful as an experiment. It makes the cost of composition visible: two layers roughly double the hash and bit-check work.
+
+## Performance
+
+Benchmarks were run with:
+
+```bash
+go test -bench=. -benchmem
+```
+
+The test uses 10,000 generated members and a filter size of 1,000,000 bits.
+
+| benchmark | ops/sec | ns/op | note |
+| --- | ---: | ---: | --- |
+| `BenchmarkAdd` | 81,934,820 | 14.47 | two FNV hashes and two bit sets |
+| `BenchmarkContains` | 87,818,529 | 13.63 | two FNV hashes and two bit checks |
+| `BenchmarkLayeredAdd` | 41,241,247 | 29.16 | two filters, four hashes total |
+| `BenchmarkLayeredContains` | 40,858,654 | 29.16 | two filters, four checks total |
+
+The layered benchmarks are almost exactly 2x the single-filter cost, which is a good sanity check. There is no hidden machinery here; the cost is dominated by hashing and touching the bitset.
+
+## What This Lab Teaches
+
+The interesting part of Bloom filters is not the code size. The implementation is tiny. The interesting part is the parameter tradeoff:
+
+- larger bitsets reduce false positives
+- more hash functions reduce collisions up to a point
+- too many hash functions increase CPU cost and can saturate the bitset faster
+- false negatives are not allowed
+- false positives are the expected compromise
+
+The current implementation is intentionally simple. The next useful experiments would be:
+
+- measure false positive rate as inserted member count grows
+- compare FNV with faster non-cryptographic hashes
+- derive optimal hash count from expected insertions and target false positive rate
+- use double hashing instead of running multiple independent hash functions
+- add a counting Bloom filter variant that supports deletion
+
+## Takeaway
+
+A Bloom filter is a nice first lab because it sits at the intersection of bits, hashing, probability, and performance.
+
+The whole data structure is a compact bet: spend a little CPU and a fixed amount of memory to avoid expensive exact lookups most of the time.

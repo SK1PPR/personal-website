@@ -1,9 +1,9 @@
 export const SITE = {
   name: 'Khushal Agrawal',
-  title: 'Khushal Agrawal - Distributed Systems & Infrastructure Engineer',
+  title: 'Khushal Agrawal - Data Infrastructure & Distributed Systems Engineer',
   description:
-    'Engineering notebook on distributed systems, observability, AI runtime infrastructure, Linux, databases, and open-source software.',
-  url: 'https://khushalagrawal.dev',
+    'Engineering notebook on data infrastructure, distributed systems, observability, databases, performance, and open-source software.',
+  url: 'https://khushal.net',
   author: 'Khushal Agrawal',
   email: 'agrawalkhushal04@gmail.com',
   phone: '+91 82697 88323',

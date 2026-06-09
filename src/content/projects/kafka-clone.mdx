@@ -1,0 +1,36 @@
+---
+title: "Kafka Clone"
+description: "A Kafka-like C++ broker with topic creation, produce/fetch APIs, list-offsets support, partition log directories, byte-offset reads, and broker API tests."
+category: "Distributed Systems"
+status: "active"
+github: "https://github.com/SK1PPR/kafka"
+featured: true
+order: 2
+---
+
+## Architecture Overview
+
+The Kafka clone is a C++ broker built around append-only topic-partition logs and protocol-style APIs for creating topics, producing messages, fetching records, and listing offsets.
+
+The project is focused on the core mechanics behind streaming infrastructure: partition metadata, byte offsets, broker request handling, persistence, and correctness tests for producer/consumer flows.
+
+## Technical Challenges
+
+- topic and partition metadata management
+- append-only log layout on disk
+- byte-offset based produce and fetch behavior
+- earliest and latest offset discovery
+- duplicate topic handling
+- broker API tests for end-to-end message flow correctness
+
+## Current API Surface
+
+The broker currently supports CreateTopics, Produce, Fetch, and ListOffsets. Produce returns byte-position base offsets, ListOffsets reports earliest and latest offsets, and Fetch can read from the beginning or a specific offset.
+
+## Lessons Learned
+
+Kafka-style systems are less about one API and more about the contract between durability, offsets, batching, and consumer progress. Even a compact clone quickly becomes an exercise in making the log format and broker semantics explicit.
+
+## Tools
+
+C++, broker APIs, append-only logs, filesystem persistence, tests

@@ -1,22 +1,23 @@
 ---
-title: "Vector DB"
-description: "A multimodal vector database engine in Rust using RocksDB for storage, custom embedding modules, KD-Tree indexing, and KNN search."
+title: "VortexDB"
+description: "A Rust vector database engine with RocksDB and in-memory storage backends, custom embedding modules, KD-Tree indexing, KNN search, and ANN benchmark preparation."
 category: "Databases"
 status: "prototype"
-github: "https://github.com/sdslabs/vector-db"
+github: "https://github.com/sdslabs/VortexDB"
 featured: true
-order: 2
+order: 3
 ---
 
 ## Architecture Overview
 
-Vector DB stores embeddings and metadata in RocksDB, then exposes vector search through custom indexing and retrieval components.
+VortexDB stores embeddings and metadata through pluggable storage engines, including RocksDB-backed persistence and an in-memory backend, then exposes vector search through custom indexing and retrieval components.
 
-The project explores a compact database architecture: persistent storage, embedding generation hooks, indexing structures, and terminal-first interaction.
+The project explores a compact database architecture: storage engine boundaries, embedding generation hooks, indexing structures, and terminal-first interaction.
 
 ## Technical Challenges
 
 - storage layout for vectors and metadata
+- storage engine abstraction across RocksDB and in-memory backends
 - KD-Tree construction and query performance
 - KNN search implementation tradeoffs
 - module boundaries for custom embedding generation
@@ -24,7 +25,7 @@ The project explores a compact database architecture: persistent storage, embedd
 
 ## Benchmarks
 
-The key measurements are index build time, query latency, recall quality, and RocksDB storage overhead as vector counts grow.
+The key measurements are index build time, query latency, recall quality, memory overhead, and RocksDB storage overhead as vector counts grow. The project is being prepared for ANN benchmark submission.
 
 ## Lessons Learned
 

@@ -17,12 +17,12 @@ const projects = (await getCollection('projects'))
   <section class="border-b border-[var(--line)]">
     <div class="mx-auto grid max-w-page gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
       <div>
-        <p class="mb-5 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Distributed Systems & Infrastructure Engineer</p>
+        <p class="mb-5 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Data Infrastructure & Distributed Systems Engineer</p>
         <h1 class="max-w-4xl text-5xl font-semibold tracking-normal sm:text-6xl">
           Khushal Agrawal
         </h1>
         <p class="mt-6 max-w-3xl text-xl leading-9 text-[var(--muted)]">
-          Building distributed systems, observability platforms, AI runtime infrastructure, and open-source software.
+          Building data infrastructure, distributed logs, databases, observability systems, and open-source software.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
           <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.github}>GitHub</a>
@@ -34,9 +34,9 @@ const projects = (await getCollection('projects'))
       <div class="notebook-panel rounded-md p-5 font-mono text-sm leading-7 text-[var(--muted)]">
         <p class="text-[var(--accent)]">$ focus --now</p>
         <p>location: Roorkee, India</p>
-        <p>stack: rust, c++, python, linux, docker</p>
-        <p>systems: redis, rocksdb, emulators, p2p networking</p>
-        <p>mode: build the primitive, measure the edge cases</p>
+        <p>stack: rust, c++, java, python, linux, docker</p>
+        <p>systems: redis, kafka, vortexdb, rocksdb, observability</p>
+        <p>mode: build the primitive, benchmark the hot path</p>
       </div>
     </div>
   </section>
@@ -44,13 +44,13 @@ const projects = (await getCollection('projects'))
   <div class="mx-auto max-w-page px-4 sm:px-6">
     <Section title="Short Bio" eyebrow="Profile">
       <p class="max-w-reading text-lg leading-8 text-[var(--muted)]">
-        I am a Computer Science undergraduate at IIT Roorkee focused on systems, infrastructure, databases, networking, and low-level software. This site is my public notebook for architecture notes, experiments, case studies, and open-source work.
+        I am a Computer Science undergraduate at IIT Roorkee focused on data infrastructure, distributed systems, databases, networking, and low-level software. This site is my public notebook for architecture notes, performance experiments, case studies, and open-source work.
       </p>
     </Section>
 
     <Section title="Current Focus Areas" eyebrow="Research">
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {['Rust systems programming', 'Database internals', 'Emulators and virtual machines', 'Networking protocols'].map((item) => (
+        {['Rust systems programming', 'Database internals', 'Distributed logs', 'Performance profiling'].map((item) => (
           <Card title={item} description="Design notes, experiments, measurements, and implementation writeups." />
         ))}
       </div>
@@ -76,7 +76,7 @@ const projects = (await getCollection('projects'))
       <div class="grid gap-4 md:grid-cols-3">
         <Card title="Google Summer of Code" meta="Inkscape" description="Re-implemented Node and Pen Tool UX workflows and optimized Bezier curve rendering in C++/Gtkmm." />
         <Card title="SDSLabs" meta="developer" description="Contributed to technical applications and open-source engineering work from the IIT Roorkee student developer group." />
-        <Card title="Systems Projects" meta="github.com/SK1PPR" description="Redis clone, vector database, emulators, assembler, and peer-to-peer networking projects." />
+        <Card title="Systems Projects" meta="github.com/SK1PPR" description="Redis clone, Kafka clone, VortexDB, emulators, compiler, assembler, and peer-to-peer networking projects." />
       </div>
     </Section>
   </div>
