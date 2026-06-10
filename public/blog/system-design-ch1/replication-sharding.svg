@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Replication and sharding as two different scaling strategies</title>
+  <desc id="desc">Original diagram contrasting primary-replica database scaling with horizontal sharding by key range or hash.</desc>
+  <rect width="1200" height="620" fill="#0d0e0b"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#22c55e"/>
+    </marker>
+    <style>
+      .box{fill:#151611;stroke:#3a3d32;stroke-width:2;rx:8}
+      .label{fill:#f2f1ea;font:700 24px ui-sans-serif,system-ui,sans-serif}
+      .small{fill:#aaa79a;font:18px ui-monospace,SFMono-Regular,Menlo,monospace}
+      .flow{stroke:#22c55e;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .muted{stroke:#5b604f;stroke-width:2;fill:none;stroke-dasharray:8 8}
+    </style>
+  </defs>
+  <text class="label" x="72" y="72">Replication: copy the same data</text>
+  <rect class="box" x="92" y="128" width="180" height="86"/>
+  <text class="label" x="132" y="164">Primary</text>
+  <text class="small" x="130" y="191">writes land here</text>
+  <rect class="box" x="390" y="96" width="180" height="76"/>
+  <text class="label" x="430" y="143">Replica A</text>
+  <rect class="box" x="390" y="214" width="180" height="76"/>
+  <text class="label" x="430" y="261">Replica B</text>
+  <path class="flow" d="M272 171h112"/>
+  <path class="flow" d="M272 171c60 0 58 81 112 81"/>
+  <path class="muted" d="M480 172v42"/>
+  <text class="small" x="86" y="328">Good for read scaling and failover. Watch replication lag and write-primary bottlenecks.</text>
+  <text class="label" x="692" y="72">Sharding: split the data</text>
+  <rect class="box" x="732" y="128" width="180" height="86"/>
+  <text class="label" x="778" y="164">Router</text>
+  <text class="small" x="759" y="191">hash / range</text>
+  <rect class="box" x="982" y="72" width="150" height="64"/>
+  <text class="label" x="1026" y="113">S0</text>
+  <rect class="box" x="982" y="168" width="150" height="64"/>
+  <text class="label" x="1026" y="209">S1</text>
+  <rect class="box" x="982" y="264" width="150" height="64"/>
+  <text class="label" x="1026" y="305">S2</text>
+  <path class="flow" d="M912 171c30 0 34-67 64-67"/>
+  <path class="flow" d="M912 171h64"/>
+  <path class="flow" d="M912 171c30 0 34 125 64 125"/>
+  <text class="small" x="690" y="380">Good for write and data-size scaling. Watch hot keys, resharding, joins, and cross-shard queries.</text>
+  <rect class="box" x="408" y="438" width="384" height="82"/>
+  <text class="label" x="504" y="473">Celebrity problem</text>
+  <text class="small" x="445" y="500">one key or user attracts disproportionate traffic</text>
+  <path class="flow" d="M600 438c0-52 250-168 376-168"/>
+</svg>

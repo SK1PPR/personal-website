@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Cache hierarchy and invalidation choices</title>
+  <desc id="desc">Original diagram showing browser cache, CDN, application cache, database, TTLs, invalidation, and sticky sessions.</desc>
+  <rect width="1200" height="620" fill="#0d0e0b"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#22c55e"/>
+    </marker>
+    <style>
+      .box{fill:#151611;stroke:#3a3d32;stroke-width:2;rx:8}
+      .label{fill:#f2f1ea;font:700 24px ui-sans-serif,system-ui,sans-serif}
+      .small{fill:#aaa79a;font:18px ui-monospace,SFMono-Regular,Menlo,monospace}
+      .flow{stroke:#22c55e;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .warn{fill:#f2f1ea;font:700 20px ui-sans-serif,system-ui,sans-serif}
+    </style>
+  </defs>
+  <text class="label" x="72" y="72">Caching is a chain of promises</text>
+  <rect class="box" x="74" y="142" width="180" height="90"/>
+  <text class="label" x="118" y="178">Browser</text>
+  <text class="small" x="114" y="205">private cache</text>
+  <rect class="box" x="312" y="142" width="180" height="90"/>
+  <text class="label" x="372" y="178">CDN</text>
+  <text class="small" x="347" y="205">edge objects</text>
+  <rect class="box" x="550" y="142" width="180" height="90"/>
+  <text class="label" x="588" y="178">App cache</text>
+  <text class="small" x="589" y="205">memcache</text>
+  <rect class="box" x="788" y="142" width="180" height="90"/>
+  <text class="label" x="828" y="178">Database</text>
+  <text class="small" x="829" y="205">truth</text>
+  <path class="flow" d="M254 187h52"/>
+  <path class="flow" d="M492 187h52"/>
+  <path class="flow" d="M730 187h52"/>
+  <rect class="box" x="164" y="356" width="220" height="90"/>
+  <text class="warn" x="206" y="394">TTL policy</text>
+  <text class="small" x="199" y="421">how stale is OK?</text>
+  <rect class="box" x="490" y="356" width="220" height="90"/>
+  <text class="warn" x="525" y="394">Invalidation</text>
+  <text class="small" x="525" y="421">who deletes keys?</text>
+  <rect class="box" x="816" y="356" width="220" height="90"/>
+  <text class="warn" x="858" y="394">Stickiness</text>
+  <text class="small" x="845" y="421">session locality</text>
+  <path class="flow" d="M274 356c40-88 112-111 128-118"/>
+  <path class="flow" d="M600 356c10-88 28-111 40-118"/>
+  <path class="flow" d="M926 356c-8-88-34-111-48-118"/>
+  <text class="small" x="72" y="560">Fast reads are easy to add and hard to keep correct. Every cache needs an ownership story: TTL, invalidation, or recomputation.</text>
+</svg>

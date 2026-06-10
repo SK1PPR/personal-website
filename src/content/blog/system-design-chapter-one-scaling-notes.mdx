@@ -1,0 +1,278 @@
+---
+title: "System Design Chapter 1 Notes: How Web Systems Start Scaling"
+description: "Notes from the first chapter of System Design Interview, covering load balancers, replication, caching, CDNs, sharding, denormalization, sticky sessions, and operational automation."
+pubDate: 2026-06-10
+tags: ["system-design", "distributed-systems", "databases", "caching", "scalability"]
+---
+
+I read the first chapter of *System Design Interview: An Insider's Guide* by Alex Xu. The chapter is a broad tour of what happens when a simple single-server application starts receiving more traffic, more data, more global users, and more operational complexity.
+
+The useful mental model is that scaling is not one move. It is a sequence of separations:
+
+- separate traffic routing from application logic
+- separate reads from writes
+- separate hot data from cold data
+- separate static content from dynamic content
+- separate one database into replicas or shards
+- separate foreground requests from background work
+- separate application behavior from observability and automation
+
+Each step solves one bottleneck and usually creates a new coordination problem.
+
+![A growing web system request path with geo routing, CDN, load balancer, app servers, cache, database, queue, and logs](/blog/system-design-ch1/scaling-path.svg)
+
+## Start With One Server
+
+The simplest version of a web application has one server doing everything:
+
+- serving HTTP requests
+- running application logic
+- reading and writing data
+- storing files
+- logging locally
+
+This is a good starting point. It is easy to deploy, debug, and reason about. But it also means every resource limit is concentrated in one place: CPU, memory, network, disk, and database capacity.
+
+Scaling starts when one of those limits becomes visible.
+
+## Load Balancers
+
+The first split is usually between traffic routing and request handling. A load balancer sits in front of multiple application servers and decides where each request should go.
+
+This gives the system:
+
+- horizontal application scaling
+- health checks
+- failover when one app server dies
+- a stable entry point for clients
+
+Load balancing also introduces a subtle question: does a user need to keep hitting the same backend?
+
+If session state lives only in app memory, the load balancer may need sticky sessions. That keeps a client attached to the same backend, but it weakens balancing and makes server failures more annoying. A cleaner design usually moves session state into shared storage, a cache, or a signed client-side token so any healthy app server can handle the request.
+
+Sticky sessions are a useful patch. They should not become the foundation of the system unless there is a deliberate reason.
+
+## Database Scaling Starts With Replication
+
+Once multiple app servers exist, the database often becomes the next bottleneck.
+
+Replication copies data from one database node to others. A common pattern is:
+
+- primary handles writes
+- replicas handle reads
+- replicas can be promoted if the primary fails
+
+This is powerful because many applications are read-heavy. Moving read traffic to replicas can buy a lot of headroom.
+
+The tradeoff is consistency. Replication is not always instant. A user may write data to the primary and then read from a replica that has not caught up yet.
+
+That forces a product-level decision:
+
+- Is stale data acceptable for this feature?
+- Should read-after-write traffic go to the primary?
+- Can we tolerate eventual consistency?
+- What happens during failover?
+
+Replication is not just a performance feature. It is also a consistency policy.
+
+![Replication copies the same data, while sharding splits data across nodes](/blog/system-design-ch1/replication-sharding.svg)
+
+## Replication Policies
+
+Replication policy is where system design becomes less mechanical.
+
+Synchronous replication gives stronger durability and consistency, but it makes writes slower because the system waits for acknowledgements from replicas.
+
+Asynchronous replication improves write latency, but introduces lag. If the primary fails before replicas catch up, some writes may be lost or unavailable.
+
+Semi-synchronous replication sits between the two: wait for at least one replica before confirming the write.
+
+There is no universal best policy. The right choice depends on what the system values more:
+
+- low write latency
+- read scalability
+- strong consistency
+- failure recovery
+- operational simplicity
+
+The important part is to make the policy explicit. Hidden replication assumptions become production incidents later.
+
+## Caching
+
+Caching is the next major scaling tool. It keeps frequently accessed data close to the application so the database does not have to answer the same expensive query repeatedly.
+
+Common cache patterns:
+
+- read-through: application asks cache first, then database on miss
+- write-through: writes update cache and database together
+- write-around: writes go to database, cache fills on future reads
+- cache-aside: application owns cache miss and invalidation logic
+
+Caching helps most when:
+
+- data is read often
+- data is expensive to compute
+- slightly stale data is acceptable
+- the hot set fits in memory
+
+But a cache is also another copy of data. Every cache needs a correctness story:
+
+- When does the entry expire?
+- Who invalidates it?
+- What happens if invalidation fails?
+- Is stale data acceptable?
+- Can cache stampedes overload the database?
+
+This is where the lesson from *Scaling Memcache at Facebook* is useful: a cache is not just a hashmap beside the app. At large scale, cache behavior becomes distributed systems behavior. Hot keys, invalidation fanout, regional locality, and thundering herds all become first-class problems.
+
+![Cache hierarchy showing browser cache, CDN, app cache, database, TTL policy, invalidation, and stickiness](/blog/system-design-ch1/cache-cdn.svg)
+
+## CDNs And Dynamic Content
+
+A CDN moves content closer to users. Static assets are the easiest case:
+
+- images
+- JavaScript bundles
+- CSS
+- fonts
+- downloads
+
+The origin server can be far away because the CDN edge serves cached copies near the user.
+
+Dynamic content is harder. The response depends on user, location, authentication, inventory, permissions, or time. Still, dynamic content can sometimes be cached if the system controls the variation carefully.
+
+Useful techniques include:
+
+- cache public fragments separately from private data
+- vary cache keys by region, language, device, or auth state
+- use short TTLs for semi-dynamic pages
+- purge specific objects on updates
+- use stale-while-revalidate when freshness is flexible
+
+The hard part is not putting a CDN in front of a service. The hard part is deciding which content is safe to cache and what "fresh enough" means.
+
+## Geo-Routing
+
+Geo-routing sends users to a nearby region. This reduces latency and can improve availability.
+
+But it introduces cross-region questions:
+
+- Where is the source of truth?
+- Is data active-active or active-passive?
+- Can users move between regions?
+- How do we handle regional failover?
+- How do we replicate data across regions without breaking consistency?
+
+Geo-routing is not just a networking optimization. It changes the data model and failure model.
+
+## Sharding
+
+Replication copies the same data. Sharding splits data.
+
+A shard key decides where a record lives. For example:
+
+- user ID
+- organization ID
+- region
+- hash of an entity ID
+- time bucket
+
+Sharding helps when a single database cannot hold all data or handle all writes. It also creates new problems:
+
+- cross-shard queries are expensive
+- joins become harder
+- resharding is operationally risky
+- hot shards can dominate the cluster
+- transactions across shards are complex
+
+The shard key is one of the most important design choices because it becomes part of the system's physical architecture.
+
+## The Celebrity Problem
+
+The celebrity problem is a hot-key problem.
+
+Most users may receive normal traffic, but one famous user, viral post, or popular entity can attract disproportionate reads and writes. If the shard key maps that entity to one shard, the system can become bottlenecked even when the rest of the cluster is idle.
+
+Possible mitigations:
+
+- cache the hot entity aggressively
+- split reads across replicas
+- fan out writes asynchronously
+- separate celebrity entities into special partitions
+- use key salting for specific hot workloads
+- denormalize counters or timelines
+
+The important lesson is that averages lie. A system can look well balanced overall while one key is melting a shard.
+
+## Denormalization
+
+Normalization reduces duplication and keeps data consistent. Denormalization intentionally duplicates data to make reads faster or simpler.
+
+Examples:
+
+- storing a username beside each comment
+- precomputing follower counts
+- materializing timelines
+- keeping search documents separate from normalized tables
+- storing read-optimized projections
+
+Denormalization is useful when the read path is more important than avoiding duplication. The tradeoff is update complexity. Once data is copied, every write has to decide how and when those copies are updated.
+
+Denormalization is not "bad schema design." It is a performance choice that needs ownership.
+
+## Logging, Metrics, And Automation
+
+Scaling also requires operational visibility.
+
+Once the system has load balancers, caches, queues, replicas, shards, and multiple regions, debugging by SSH is not enough. The system needs:
+
+- centralized logs
+- metrics
+- traces
+- dashboards
+- alerts
+- automated deployments
+- health checks
+- rollback paths
+
+Automation matters because manual operations do not scale with the system. If adding a server, replacing a node, promoting a replica, or deploying a build requires a fragile manual checklist, the operational layer becomes the bottleneck.
+
+## The Scaling Pattern
+
+The chapter's big idea is that scaling is incremental.
+
+You do not start with global sharding, multi-region active-active replication, and a complex caching hierarchy. You start with the simplest design that works, measure the bottleneck, then split the next responsibility away from the overloaded component.
+
+The rough path looks like this:
+
+1. one server
+2. separate database
+3. multiple app servers behind a load balancer
+4. database replication
+5. cache hot reads
+6. CDN static content
+7. queue background work
+8. shard data
+9. add geo-routing and multi-region deployment
+10. invest heavily in logging, metrics, and automation
+
+This path is not fixed, but the principle is stable: scale the bottleneck you actually have.
+
+## My Takeaway
+
+The most useful lesson from the first chapter is that every scaling technique is a trade:
+
+- load balancers trade single-server simplicity for routing and session questions
+- replication trades read scale for consistency and lag questions
+- caching trades speed for invalidation complexity
+- CDNs trade latency for freshness policy
+- sharding trades capacity for query and operational complexity
+- denormalization trades read speed for write complexity
+- geo-routing trades latency for regional consistency and failover questions
+
+Good system design is not about naming every component. It is about knowing why the component exists, what bottleneck it removes, and what new failure mode it introduces.
+
+## References
+
+- Alex Xu, *System Design Interview: An Insider's Guide*, Chapter 1.
+- Nishtala et al., *Scaling Memcache at Facebook*.
