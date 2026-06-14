@@ -1,0 +1,230 @@
+---
+title: "Building grep in Rust Taught Me to Think in State Machines"
+description: "Notes from building a grep clone with a custom regex engine: tokenization, Shunting Yard, Thompson-style NFAs, epsilon transitions, and line-by-line matching."
+pubDate: 2026-06-14
+tags: ["rust", "grep", "regex", "state-machines", "systems"]
+---
+
+I have been building a small `grep` clone in Rust. The CLI part is familiar: read from stdin or files, walk directories with `-r`, and print matching lines.
+
+The interesting part is that the project does not use an external regex crate. It builds a small regex engine from scratch.
+
+That made the project feel less like "build grep" and more like "build a tiny compiler that emits a state machine."
+
+![Regex engine pipeline from pattern to tokens, postfix notation, NFA, and matching](/blog/grep-state-machines/regex-pipeline.svg)
+
+## The CLI Is Not The Hard Part
+
+The command shape is straightforward:
+
+```sh
+myprogram [-r] -E "pattern" [path1] [path2] ...
+```
+
+If no path is provided, it reads stdin. If paths are provided, it searches files. With `-r`, it recursively walks directories and prints matches as `path:line`.
+
+The core loop is conceptually simple:
+
+```rust
+for line in reader.lines() {
+    if match_pattern(&line?, pattern) {
+        println!("{}", line?);
+    }
+}
+```
+
+But `match_pattern` is where the project becomes a systems exercise.
+
+## Regex As A Compilation Pipeline
+
+The engine follows a classic path:
+
+1. tokenize the pattern
+2. insert explicit concatenation tokens
+3. convert infix regex syntax into postfix notation
+4. build a Thompson-style NFA from postfix tokens
+5. run the NFA against each input line
+
+The parser recognizes tokens like:
+
+- literals
+- `*`, `+`, `?`
+- `|`
+- `(` and `)`
+- `^` and `$`
+- `.`
+- character classes like `[abc]` and `[^abc]`
+- shorthand classes like `\d` and `\w`
+
+One of the useful implementation details is explicit concatenation. Regex syntax hides concatenation:
+
+```txt
+ab
+```
+
+really means:
+
+```txt
+a concat b
+```
+
+The parser inserts a `Concat` token where needed. That makes the later Shunting Yard step much cleaner because all operators are explicit.
+
+## Why Postfix Helps
+
+Regex syntax is naturally infix:
+
+```txt
+a(b|c)*d
+```
+
+The engine converts it to postfix:
+
+```txt
+abc|*d..
+```
+
+This is useful because postfix can be evaluated with a stack. When the NFA builder sees a literal, it pushes a tiny machine. When it sees an operator, it pops one or two machines, combines them, and pushes the result back.
+
+That means regex construction becomes mechanical:
+
+- literal -> one transition
+- concat -> connect two machines
+- union -> branch with epsilon transitions
+- star -> loop with epsilon transitions
+- plus -> require one match, then loop
+- question -> either skip or match once
+
+This is the moment the project starts to feel like a compiler backend. The output is not assembly, but it is still an executable structure: a state machine.
+
+## The NFA Model
+
+The engine stores states as IDs with transitions:
+
+```rust
+pub struct State {
+    pub id: usize,
+    pub transitions: Vec<(Matcher, usize)>,
+}
+```
+
+A transition has a matcher and a next state. The matcher can either consume a character or be `Epsilon`.
+
+```rust
+pub enum Matcher {
+    Range(Vec<char>, bool),
+    Epsilon,
+}
+```
+
+Epsilon transitions are the trick that make regex operators composable. They move between states without consuming input.
+
+![NFA state machine with epsilon transitions branching and joining around alternatives](/blog/grep-state-machines/nfa-state-machine.svg)
+
+For example, `a|b` becomes a branch. The start state can move by epsilon into the `a` path or the `b` path. Both paths can then rejoin at a shared end state.
+
+The pattern is structural:
+
+- alternation creates branches
+- concatenation connects machines
+- repetition creates loops
+- optional matching creates a skip path
+
+Regex operators are not magic. They are graph transformations.
+
+## Matching As State Exploration
+
+The matcher keeps a stack of possible positions:
+
+```rust
+let mut stack: Vec<(usize, usize, Vec<usize>)> = vec![];
+stack.push((self.start_state, 0, Vec::new()));
+```
+
+Each stack item contains:
+
+- current state ID
+- current input index
+- epsilon-memory for cycle avoidance
+
+At every step, the engine checks transitions out of the current state.
+
+If the transition is epsilon, it moves to the next state without consuming input.
+
+If the transition matches the current character, it advances the input index by one.
+
+If the end state is reached, the engine returns the index where the match ended.
+
+That is the whole mental model:
+
+```txt
+state + input position -> next possible states
+```
+
+The implementation is depth-first because it uses a stack. A breadth-first version would use a queue. A DFA version would precompute sets of NFA states into deterministic states.
+
+## Anchors Change The Search Strategy
+
+The wrapper around the engine handles `^` and `$`.
+
+Without `^`, the engine tries the pattern at every possible offset in the line:
+
+```rust
+for i in 0..input.len() {
+    let slice = input.chars().skip(i).collect::<String>();
+    if self.engine.compute(&slice) >= 0 {
+        return true;
+    }
+}
+```
+
+With `^`, it only tries from the start. With `$`, it checks that the match ends at the end of the input.
+
+This is a nice example of how grep-style matching is different from full-string regex matching. A line matches if the pattern appears anywhere, unless anchors constrain it.
+
+## What The Project Supports
+
+The current test suite has 36 passing tests and covers:
+
+- literal matching
+- concatenation
+- alternation
+- `*`, `+`, and `?`
+- start and end anchors
+- character classes
+- negated character classes
+- dot matching
+- `\d` and `\w`
+- recursive file search behavior through the CLI
+
+The project is intentionally not trying to be production `grep`. It is a learning implementation. That is a good thing. The value is that every abstraction is visible.
+
+## What Could Improve
+
+The most obvious performance issue is that matching unanchored patterns currently creates new `String` slices while trying offsets. A more serious implementation would avoid allocation and operate on byte or character indices over the original input.
+
+The engine also explores the NFA directly. That is good for clarity, but not always optimal. A future version could:
+
+- convert the NFA to a DFA
+- cache epsilon closures
+- simplify NFAs after construction
+- avoid repeated `input.chars().count()`
+- add lazy quantifier tests
+- support backreferences later, with the caveat that backreferences move beyond regular languages
+
+The README also lists a DFA conversion as a possible improvement. That would trade memory for faster matching.
+
+## My Takeaway
+
+The best part of this project is that it makes state machines concrete.
+
+Before building it, regex can feel like syntax. After building it, regex feels like a graph:
+
+- parse text into tokens
+- reorder operators into postfix
+- combine tiny machines into bigger machines
+- walk possible states over input
+
+That is a pattern that shows up everywhere in systems work: protocol parsers, lexers, network state machines, workflow engines, stream processors, and schedulers.
+
+`grep` is a small command-line tool on the surface. Underneath, it is a reminder that a lot of software is just text being turned into states, and states being advanced carefully.

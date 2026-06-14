@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">NFA state machine with epsilon transitions</title>
+  <desc id="desc">Original diagram showing a start state branching with epsilon transitions to two literal match paths and joining at an accept state.</desc>
+  <rect width="1200" height="560" fill="#0d0e0b"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#22c55e"/>
+    </marker>
+    <style>
+      .node{fill:#151611;stroke:#3a3d32;stroke-width:3}
+      .accept{fill:#151611;stroke:#22c55e;stroke-width:4}
+      .label{fill:#f2f1ea;font:700 24px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+      .small{fill:#aaa79a;font:18px ui-monospace,SFMono-Regular,Menlo,monospace;text-anchor:middle}
+      .edge{stroke:#22c55e;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .eps{stroke:#aaa79a;stroke-width:2.5;fill:none;stroke-dasharray:8 8;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text class="label" x="600" y="62">Alternation as state-machine structure</text>
+  <circle class="node" cx="146" cy="280" r="46"/>
+  <text class="label" x="146" y="288">S</text>
+  <circle class="node" cx="364" cy="180" r="42"/>
+  <text class="label" x="364" y="188">A</text>
+  <circle class="node" cx="364" cy="380" r="42"/>
+  <text class="label" x="364" y="388">B</text>
+  <circle class="node" cx="610" cy="180" r="42"/>
+  <text class="label" x="610" y="188">a</text>
+  <circle class="node" cx="610" cy="380" r="42"/>
+  <text class="label" x="610" y="388">b</text>
+  <circle class="accept" cx="884" cy="280" r="52"/>
+  <text class="label" x="884" y="288">END</text>
+  <path class="eps" d="M188 260c58-54 98-78 135-80"/>
+  <path class="eps" d="M188 300c58 54 98 78 135 80"/>
+  <path class="edge" d="M406 180h158"/>
+  <path class="edge" d="M406 380h158"/>
+  <path class="eps" d="M652 180c70 4 114 40 190 78"/>
+  <path class="eps" d="M652 380c70-4 114-40 190-78"/>
+  <text class="small" x="270" y="198">epsilon</text>
+  <text class="small" x="270" y="362">epsilon</text>
+  <text class="small" x="488" y="162">match 'a'</text>
+  <text class="small" x="488" y="362">match 'b'</text>
+  <text class="small" x="600" y="508">The matcher keeps a frontier of possible states. Epsilon edges move without consuming input; normal edges consume one character.</text>
+</svg>
