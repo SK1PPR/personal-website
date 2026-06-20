@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
+import NewsletterSignup from '@/components/NewsletterSignup.astro';
 import ContentLayout from '@/layouts/ContentLayout.astro';
 import { SITE } from '@/consts';
 import { formatDate, readingTime, sortByDate } from '@/utils/content';
@@ -96,6 +97,9 @@ const breadcrumbJsonLd = {
     </ol>
   </Fragment>
   <Content />
+  <div class="mt-12">
+    <NewsletterSignup title="Want the next build note?" description="I write about the project slice, the hard part, and the lesson worth carrying into the next system." />
+  </div>
   {related.length > 0 && (
     <section class="mt-12 border-t border-[var(--line)] pt-6">
       <h2 class="text-xl font-semibold">Related Notes</h2>

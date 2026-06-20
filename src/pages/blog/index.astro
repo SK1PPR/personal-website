@@ -2,19 +2,88 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Card from '@/components/Card.astro';
+import NewsletterSignup from '@/components/NewsletterSignup.astro';
 import { formatDate, readingTime, sortByDate } from '@/utils/content';
 
 const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft));
+const subscribeStatus = Astro.url.searchParams.get('subscribe');
+const statusMessages: Record<string, string> = {
+  ok: 'You are on the list. New notes will land in your inbox.',
+  invalid: 'That email address did not look right. Try again below.',
+  'missing-config': 'The mailing list form is live, but the Resend API key still needs to be configured in Cloudflare.',
+  error: 'The mailing list provider did not accept that request. Try again later.',
+  'use-form': 'Use the form below to join the mailing list.'
+};
+const topics = [...new Set(posts.flatMap((post) => post.data.tags))]
+  .map((tag) => ({
+    tag,
+    posts: posts.filter((post) => post.data.tags.includes(tag))
+  }))
+  .sort((a, b) => b.posts.length - a.posts.length || a.tag.localeCompare(b.tag));
+const featuredSeries = [
+  {
+    title: 'Building A Storage Engine',
+    description: 'LSM trees, WAL records, memtables, SSTables, Bloom filters, compaction, and the road toward a serious database core.',
+    tags: ['storage-engine', 'lsm-tree', 'databases']
+  },
+  {
+    title: 'Redis Internals',
+    description: 'Event loops, profiling, protocol details, and the parts of a clone that turn into systems lessons.',
+    tags: ['redis', 'performance', 'systems']
+  },
+  {
+    title: 'Build The Primitive',
+    description: 'Small from-scratch implementations that explain bigger infrastructure ideas.',
+    tags: ['rust', 'state-machines', 'systems']
+  }
+];
 ---
 
-<BaseLayout title="Blog" description="Technical writing and engineering notes on distributed systems, Linux, observability, and AI infrastructure.">
+<BaseLayout title="Engineering Notes" description="Technical writing, build logs, and reading notes on distributed systems, databases, Linux, observability, and performance.">
   <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
     <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Engineering notes</p>
-    <h1 class="text-4xl font-semibold tracking-normal sm:text-5xl">Blog</h1>
+    <h1 class="max-w-4xl text-4xl font-semibold tracking-normal sm:text-5xl">Build logs, reading notes, and systems essays.</h1>
     <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">
-      Long-form notes on internals, tradeoffs, failures, measurements, and the useful edges of infrastructure work.
+      Long-form notes on internals, tradeoffs, failures, measurements, and the useful edges of building infrastructure from scratch.
     </p>
-    <div class="mt-10 grid gap-4">
+
+    {subscribeStatus && statusMessages[subscribeStatus] && (
+      <div class="mt-8 rounded border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)]">
+        {statusMessages[subscribeStatus]}
+      </div>
+    )}
+
+    <div class="mt-10">
+      <NewsletterSignup title="Get the next note" description="One email when a new systems note ships. No cadence theater, no recycled thread dumps." />
+    </div>
+
+    <section class="mt-12">
+      <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Series</p>
+      <div class="grid gap-4 md:grid-cols-3">
+        {featuredSeries.map((series) => (
+          <Card title={series.title} meta={series.tags.join(' / ')} description={series.description}>
+            <div class="mt-4 flex flex-wrap gap-2">
+              {series.tags.map((tag) => <a class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)] hover:text-[var(--text)]" href={`#${tag}`}>{tag}</a>)}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </section>
+
+    <section class="mt-12">
+      <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Topics</p>
+      <div class="flex flex-wrap gap-2">
+        {topics.map(({ tag, posts: taggedPosts }) => (
+          <span id={tag} class="scroll-mt-28 rounded border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-xs text-[var(--muted)]">
+            {tag} ({taggedPosts.length})
+          </span>
+        ))}
+      </div>
+    </section>
+
+    <section class="mt-12">
+      <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">All notes</p>
+      <div class="grid gap-4">
       {posts.map((post) => (
         <Card href={`/blog/${post.slug}/`} title={post.data.title} meta={`${formatDate(post.data.pubDate)} / ${readingTime(post.body)}`} description={post.data.description}>
           <div class="mt-4 flex flex-wrap gap-2">
@@ -22,6 +91,7 @@ const posts = sortByDate((await getCollection('blog')).filter((post) => !post.da
           </div>
         </Card>
       ))}
-    </div>
+      </div>
+    </section>
   </section>
 </BaseLayout>

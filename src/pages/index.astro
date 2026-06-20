@@ -2,61 +2,87 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Card from '@/components/Card.astro';
+import NewsletterSignup from '@/components/NewsletterSignup.astro';
 import Section from '@/components/Section.astro';
 import { SITE } from '@/consts';
 import { formatDate, readingTime, sortByDate } from '@/utils/content';
 
-const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft)).slice(0, 3);
+const allPosts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft));
+const posts = allPosts.slice(0, 4);
 const projects = (await getCollection('projects'))
   .filter((project) => project.data.featured)
   .sort((a, b) => a.data.order - b.data.order)
   .slice(0, 3);
+const allTags = allPosts.flatMap((post) => post.data.tags);
+const topTags = [...new Set(allTags)]
+  .map((tag) => ({ tag, count: allTags.filter((candidate) => candidate === tag).length }))
+  .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+  .slice(0, 8);
 ---
 
-<BaseLayout>
+<BaseLayout title="Systems Notebook" description="Build logs and technical notes on distributed systems, databases, performance, observability, and infrastructure projects.">
   <section class="border-b border-[var(--line)]">
-    <div class="mx-auto grid max-w-page gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
+    <div class="mx-auto grid max-w-page gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:py-24">
       <div>
-        <p class="mb-5 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Data Infrastructure & Distributed Systems Engineer</p>
+        <p class="mb-5 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Public systems notebook</p>
         <h1 class="max-w-4xl text-5xl font-semibold tracking-normal sm:text-6xl">
-          Khushal Agrawal
+          I build infrastructure from scratch and write down the parts that changed my mind.
         </h1>
         <p class="mt-6 max-w-3xl text-xl leading-9 text-[var(--muted)]">
-          Building data infrastructure, distributed logs, databases, observability systems, and open-source software.
+          Weekly notes on distributed logs, databases, Linux, observability, performance, and the small systems projects that make those ideas concrete.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.github}>GitHub</a>
-          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.linkedin}>LinkedIn</a>
-          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href={SITE.twitter}>X/Twitter</a>
-          <a class="rounded bg-[var(--text)] px-4 py-2 text-sm text-[var(--bg)]" href="/resume">Resume</a>
+          <a class="rounded bg-[var(--text)] px-4 py-2 text-sm text-[var(--bg)]" href="/blog">Read the notes</a>
+          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href="/projects">See the builds</a>
+          <a class="rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href="/rss.xml">RSS</a>
         </div>
       </div>
-      <div class="notebook-panel rounded-md p-5 font-mono text-sm leading-7 text-[var(--muted)]">
-        <p class="text-[var(--accent)]">$ focus --now</p>
-        <p>location: Roorkee, India</p>
-        <p>stack: rust, c++, java, python, linux, docker</p>
-        <p>systems: redis, kafka, vortexdb, rocksdb, observability</p>
-        <p>mode: build the primitive, benchmark the hot path</p>
+      <div class="notebook-panel rounded-md p-5">
+        <p class="font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Notebook shape</p>
+        <div class="mt-5 space-y-4 text-sm leading-6 text-[var(--muted)]">
+          <p><span class="font-mono text-[var(--text)]">Build logs:</span> implementation notes from systems projects that are easier to understand once they exist in code.</p>
+          <p><span class="font-mono text-[var(--text)]">Reading notes:</span> internals, papers, and concepts that connect back to real infrastructure.</p>
+          <p><span class="font-mono text-[var(--text)]">Retrospectives:</span> bugs, benchmarks, and design choices that changed the next version.</p>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="mx-auto max-w-page px-4 sm:px-6">
-    <Section title="Short Bio" eyebrow="Profile">
-      <p class="max-w-reading text-lg leading-8 text-[var(--muted)]">
-        I am a Computer Science undergraduate at IIT Roorkee focused on data infrastructure, distributed systems, databases, networking, and low-level software. This site is my public notebook for architecture notes, performance experiments, case studies, and open-source work.
-      </p>
+    <Section title="Start Here" eyebrow="For readers" description="If you like systems that become clearer after you implement the smallest honest version of them, this is the map.">
+      <div class="grid gap-4 md:grid-cols-3">
+        <Card href="/blog/" title="Engineering Notes" meta={`${allPosts.length} posts`} description="Long-form build logs, architecture notes, measurements, and lessons from infrastructure projects." />
+        <Card href="/lab/" title="Labs" meta="interactive notes" description="Small implementation notes for algorithms, storage primitives, tracing, and systems ideas." />
+        <Card href="/projects/" title="Projects" meta="from scratch" description="Redis, Kafka, vector search, emulators, compilers, networking, and other systems work." />
+      </div>
     </Section>
 
-    <Section title="Current Focus Areas" eyebrow="Research">
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {['Rust systems programming', 'Database internals', 'Distributed logs', 'Performance profiling'].map((item) => (
-          <Card title={item} description="Design notes, experiments, measurements, and implementation writeups." />
+    <Section title="Latest Notes" eyebrow="Read next">
+      <div class="grid gap-4 md:grid-cols-2">
+        {posts.map((post) => (
+          <Card href={`/blog/${post.slug}/`} title={post.data.title} meta={`${formatDate(post.data.pubDate)} / ${readingTime(post.body)}`} description={post.data.description}>
+            <div class="mt-4 flex flex-wrap gap-2">
+              {post.data.tags.slice(0, 4).map((tag) => <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)]">{tag}</span>)}
+            </div>
+          </Card>
+        ))}
+      </div>
+      <a class="mt-5 inline-flex rounded border border-[var(--line)] px-4 py-2 text-sm hover:border-[var(--accent)]" href="/blog/">Browse all notes</a>
+    </Section>
+
+    <NewsletterSignup />
+
+    <Section title="Topics I Keep Returning To" eyebrow="Topic paths">
+      <div class="flex flex-wrap gap-2">
+        {topTags.map(({ tag, count }) => (
+          <a class="rounded border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-xs text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--text)]" href={`/blog/#${tag}`}>
+            {tag} ({count})
+          </a>
         ))}
       </div>
     </Section>
 
-    <Section title="Featured Projects" eyebrow="Case studies">
+    <Section title="Featured Builds" eyebrow="Project-backed writing">
       <div class="grid gap-4 md:grid-cols-3">
         {projects.map((project) => (
           <Card href={`/projects/${project.slug}/`} title={project.data.title} meta={project.data.category} description={project.data.description} />
@@ -64,19 +90,11 @@ const projects = (await getCollection('projects'))
       </div>
     </Section>
 
-    <Section title="Latest Blog Posts" eyebrow="Notes">
+    <Section title="About The Author" eyebrow="Resume, demoted politely">
       <div class="grid gap-4 md:grid-cols-3">
-        {posts.map((post) => (
-          <Card href={`/blog/${post.slug}/`} title={post.data.title} meta={`${formatDate(post.data.pubDate)} / ${readingTime(post.body)}`} description={post.data.description} />
-        ))}
-      </div>
-    </Section>
-
-    <Section title="OSS Contributions" eyebrow="Open source">
-      <div class="grid gap-4 md:grid-cols-3">
-        <Card title="Google Summer of Code" meta="Inkscape" description="Re-implemented Node and Pen Tool UX workflows and optimized Bezier curve rendering in C++/Gtkmm." />
-        <Card title="SDSLabs" meta="developer" description="Contributed to technical applications and open-source engineering work from the IIT Roorkee student developer group." />
-        <Card title="Systems Projects" meta="github.com/SK1PPR" description="Redis clone, Kafka clone, VortexDB, emulators, compiler, assembler, and peer-to-peer networking projects." />
+        <Card href="/about/" title="Bio" meta="IIT Roorkee" description="Computer Science undergraduate focused on data infrastructure, distributed systems, databases, networking, and low-level software." />
+        <Card href="/resume/" title="Resume" meta="professional snapshot" description="Experience, open-source work, projects, and contact details in a recruiter-friendly format." />
+        <Card href={SITE.github} title="GitHub" meta="source code" description="Project repositories, experiments, and implementation work behind the notes." />
       </div>
     </Section>
   </div>

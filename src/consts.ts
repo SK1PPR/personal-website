@@ -1,8 +1,8 @@
 export const SITE = {
   name: 'Khushal Agrawal',
-  title: 'Khushal Agrawal - Data Infrastructure & Distributed Systems Engineer',
+  title: 'Khushal Agrawal - Systems Notebook',
   description:
-    'Engineering notebook on data infrastructure, distributed systems, observability, databases, performance, and open-source software.',
+    'A public engineering notebook on distributed systems, databases, performance, observability, and building infrastructure from scratch.',
   url: 'https://khushal.net',
   author: 'Khushal Agrawal',
   email: 'agrawalkhushal04@gmail.com',
@@ -12,17 +12,16 @@ export const SITE = {
   gitlab: 'https://gitlab.com/SK1PPR',
   linkedin: 'https://linkedin.com/in/khushal-agrawal/',
   twitter: 'https://x.com/khushalSkippr',
-  resume: '/resume'
+  resume: '/resume',
+  newsletter: '/api/subscribe'
 };
 
 export const NAV = [
-  ['Home', '/'],
-  ['Blog', '/blog'],
+  ['Start', '/'],
+  ['Notes', '/blog'],
   ['Projects', '/projects'],
   ['Lab', '/lab'],
   ['OSS', '/oss'],
-  ['Reading', '/reading'],
-  ['Now', '/now'],
   ['About', '/about'],
   ['Resume', '/resume']
 ] as const;

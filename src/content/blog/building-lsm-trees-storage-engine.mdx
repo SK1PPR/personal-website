@@ -1,0 +1,269 @@
+---
+title: "I Built LSM Trees for a Storage Engine"
+description: "The first notes from building a Rust storage engine: WAL records, skip-list memtables, immutable memtables, SSTable files, block indexes, tombstones, and Bloom filters."
+pubDate: 2026-06-20
+tags: ["storage-engine", "lsm-tree", "rust", "databases", "systems"]
+---
+
+I have started building a storage engine in Rust.
+
+The goal is not to wrap RocksDB, or to hide the hard parts behind a crate, or to build an API that looks impressive before the internals exist. The goal is to make the storage path explicit enough that I can point at each moving piece and say:
+
+this is why writes are fast, this is why reads are more complicated, and this is where the next set of problems begins.
+
+So the first milestone was an LSM-shaped engine.
+
+Not a production LSM yet. There is no compaction policy, manifest recovery, block cache, or async I/O path. But the core shape is there:
+
+```text
+put/delete
+  -> append to WAL
+  -> update active memtable
+  -> rotate full memtable into immutable queue
+  -> flush immutable memtable to SSTable
+  -> read active, immutable, and disk tables newest-first
+```
+
+That is enough machinery for the design to stop being abstract.
+
+## Why Start With An LSM Tree?
+
+A log-structured merge tree is built around a tradeoff that feels almost too simple:
+
+make writes cheap now, pay organization costs later.
+
+Instead of updating random pages on disk for every write, the engine accepts writes into memory and later flushes sorted runs to disk. Reads then have to search multiple places: the current memtable, older immutable memtables, and one or more SSTable files.
+
+That tradeoff is the entire project in miniature.
+
+If writes are append-friendly, reads need structure.
+If disk files are immutable, deletes need tombstones.
+If there are many disk files, compaction eventually becomes unavoidable.
+If misses are common, Bloom filters stop the engine from touching files it can prove do not contain the key.
+
+I wanted the first version to expose those pressures instead of skipping straight to optimizations.
+
+## The Write Path
+
+The engine has a small synchronous API:
+
+```rust
+engine.put(b"alpha".to_vec(), b"one".to_vec())?;
+engine.delete(b"alpha".to_vec())?;
+```
+
+Each write first receives a sequence id and is appended to a write-ahead log:
+
+```text
+record length
+checksum
+record type
+sequence id
+key length
+value length
+key bytes
+value bytes
+```
+
+There are two record types today: `Put` and `Delete`.
+
+The checksum matters because a WAL is only useful if replay can distinguish a complete record from corrupt or partial bytes. The log code can already replay records and verify checksums; engine-level startup recovery is still on the roadmap.
+
+After the WAL append succeeds, the engine updates the active memtable.
+
+That order is intentional:
+
+```text
+WAL first, memory second
+```
+
+If I ever add crash recovery, the WAL has to be the source that can rebuild memory. Writing to the memtable first would make the fast path feel nicer while making the durability story dishonest.
+
+## The MemTable Is A Skip List
+
+The active memtable is implemented as a skip list.
+
+It stores keys in sorted order, supports point lookups, and can produce an ordered iterator when it is time to flush to disk. The important API is deliberately small:
+
+```rust
+trait MemTable {
+    fn put(&mut self, key: Key, value: Value);
+    fn get(&self, key: &Key) -> Option<&Value>;
+    fn delete(&mut self, key: Key);
+    fn iter(&self) -> Box<dyn Iterator<Item = (&Key, &Value)> + '_>;
+    fn approximate_size(&self) -> usize;
+}
+```
+
+The `Value` type is either real bytes or a tombstone:
+
+```rust
+enum Value {
+    Put(Vec<u8>),
+    Tombstone,
+}
+```
+
+That tombstone is what lets deletion fit the LSM model. A delete is not a random rewrite of every older table that might contain the key. It is a newer record saying:
+
+for this key, absence wins.
+
+Older values can remain in older SSTables until compaction eventually removes them.
+
+## Rotating Into Immutable MemTables
+
+When the active memtable crosses a configured size threshold, the engine rotates it:
+
+```text
+active memtable -> immutable memtable queue
+new empty active memtable
+new WAL segment
+```
+
+The immutable queue matters because flushing to disk should not make recently written keys unreadable.
+
+Reads check:
+
+1. the active memtable
+2. immutable memtables, newest first
+3. SSTables, newest first
+
+That newest-first ordering is the simplest way to preserve overwrite and delete semantics. If `alpha = one` exists in an older SSTable and `alpha = two` exists in a newer memtable, the read must stop at the newer value. If the newest entry is a tombstone, the engine returns `None`.
+
+This is the first place where the LSM stops feeling like "write sorted files" and starts feeling like a versioned data structure.
+
+## Flushing To SSTables
+
+An immutable memtable flush becomes an SSTable file.
+
+The file layout currently looks like this:
+
+```text
+data block
+data block
+...
+block index
+Bloom filter
+footer
+```
+
+Each data block contains sorted entries. Each entry stores:
+
+```text
+key length
+value kind
+value length
+key bytes
+value bytes
+```
+
+The block index maps the first key of each block to a file offset and length:
+
+```text
+first key -> { offset, len }
+```
+
+The footer stores where the block index and Bloom filter live, plus a magic number so the reader can reject files that do not match the expected format.
+
+That footer is a small thing, but it changed how I thought about the file. Before the footer, the SSTable was "some bytes I wrote." After the footer, it became a self-describing object:
+
+```text
+open file
+read footer from the end
+load index and filter
+use index to find one block
+read only that block
+```
+
+That is a much better boundary.
+
+## Bloom Filters Make Misses Cheap
+
+Every SSTable gets a Bloom filter built while writing the file.
+
+On read, the engine asks the filter first:
+
+```text
+if filter says definitely not present:
+    skip this SSTable
+else:
+    consult block index and read candidate block
+```
+
+A Bloom filter can lie in one direction. It can say "maybe present" when the key is absent. It should not say "absent" when the key was added. That makes it perfect for avoiding miss-heavy disk reads.
+
+The current filter is intentionally simple: a bitset, several `xxHash3` hash functions, and serialization into the SSTable file. It is not tuned yet. The important thing is that the read path now has the right shape.
+
+## What Works Now
+
+The current engine supports:
+
+- `put`, `get`, and `delete`
+- file-backed WAL records with length and checksum
+- active and immutable memtables
+- memtable rotation by approximate size
+- flushing immutable memtables into SSTable files
+- block-indexed SSTable reads
+- tombstones across memory and disk
+- Bloom-filter checks before touching SSTable blocks
+- newest-value-wins reads across memtables and SSTables
+
+The tests cover the first set of invariants:
+
+- read from the active memtable
+- flush a full memtable and read from the SSTable
+- let the newest value win across SSTables
+- let deletes hide older values
+- keep immutable memtables readable before flush
+- write, reopen, get, miss, tombstone, and iterate SSTable files
+- round-trip WAL records and reject checksum corruption
+
+This is the point where the project is no longer just a collection of modules. The modules have started putting pressure on each other.
+
+## What Is Missing
+
+The honest next list is longer than the completed list.
+
+The engine still needs:
+
+- WAL replay during engine startup
+- manifest files for SSTable metadata
+- atomic SSTable install
+- compaction
+- sorted merge iterators
+- block cache
+- benchmarks
+- crash-recovery tests
+
+Compaction is the big one.
+
+Without compaction, an LSM tree is mostly a write path with accumulating debt. Every flush creates another sorted run. Reads get more expensive as more files pile up. Tombstones keep hiding values, but they do not reclaim anything. Overwritten values remain on disk.
+
+That is the next real systems problem:
+
+```text
+merge sorted runs
+drop obsolete values
+preserve newest tombstones when needed
+write new SSTables
+atomically retire old SSTables
+```
+
+It is also where the project should become more interesting.
+
+## The Lesson
+
+The main lesson from this first milestone is that an LSM tree is not just "memtable plus SSTable."
+
+It is the set of rules that makes those layers agree:
+
+- WAL before memory
+- memory before disk on reads
+- newer tables before older tables
+- tombstones before stale values
+- indexes before block reads
+- filters before unnecessary file reads
+
+Each rule is small. Together they make the storage engine coherent.
+
+That is why I like building these systems from scratch. The architecture diagram gives you the nouns. The implementation teaches you the ordering constraints.

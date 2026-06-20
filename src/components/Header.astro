@@ -14,14 +14,19 @@ import { NAV, SITE } from '@/consts';
         </a>
       ))}
     </nav>
-    <button
-      id="theme-toggle"
-      class="rounded border border-[var(--line)] px-3 py-2 font-mono text-xs text-[var(--muted)] hover:text-[var(--text)]"
-      type="button"
-      aria-label="Toggle dark mode"
-    >
-      mode
-    </button>
+    <div class="flex items-center gap-2">
+      <a class="hidden rounded border border-[var(--line)] px-3 py-2 font-mono text-xs text-[var(--muted)] hover:text-[var(--text)] sm:inline-flex" href="/blog/#newsletter">
+        subscribe
+      </a>
+      <button
+        id="theme-toggle"
+        class="rounded border border-[var(--line)] px-3 py-2 font-mono text-xs text-[var(--muted)] hover:text-[var(--text)]"
+        type="button"
+        aria-label="Toggle dark mode"
+      >
+        mode
+      </button>
+    </div>
   </div>
   <nav aria-label="Mobile navigation" class="flex gap-1 overflow-x-auto border-t border-[var(--line)] px-4 py-2 md:hidden">
     {NAV.map(([label, href]) => (

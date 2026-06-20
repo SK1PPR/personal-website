@@ -1,0 +1,45 @@
+---
+import { SITE } from '@/consts';
+
+interface Props {
+  title?: string;
+  description?: string;
+  compact?: boolean;
+}
+
+const {
+  title = 'Follow the notebook',
+  description = 'Get new systems notes, build logs, and project writeups by email. RSS is available too.',
+  compact = false
+} = Astro.props;
+---
+
+<section id={compact ? undefined : 'newsletter'} class={`notebook-panel scroll-mt-28 rounded-md ${compact ? 'p-4' : 'p-6 sm:p-7'}`}>
+  <div class={compact ? '' : 'grid gap-5 lg:grid-cols-[1fr_1.1fr] lg:items-end'}>
+    <div>
+      <p class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Mailing list</p>
+      <h2 class={compact ? 'text-lg font-semibold' : 'text-2xl font-semibold tracking-normal'}>{title}</h2>
+      <p class="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">{description}</p>
+    </div>
+    <form class={`mt-5 flex gap-2 ${compact ? 'flex-col' : 'flex-col sm:flex-row lg:mt-0'}`} action={SITE.newsletter} method="post">
+      <label class="sr-only" for={compact ? 'newsletter-email-compact' : 'newsletter-email'}>Email address</label>
+      <input
+        id={compact ? 'newsletter-email-compact' : 'newsletter-email'}
+        class="min-h-11 flex-1 rounded border border-[var(--line)] bg-[var(--bg)] px-3 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)]"
+        name="email"
+        type="email"
+        inputmode="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required
+      />
+      <input class="hidden" type="text" name="company" tabindex="-1" autocomplete="off" />
+      <button class="min-h-11 rounded bg-[var(--text)] px-4 text-sm font-medium text-[var(--bg)] transition hover:opacity-90" type="submit">
+        Subscribe
+      </button>
+    </form>
+  </div>
+  <p class="mt-3 text-xs leading-5 text-[var(--muted)]">
+    No growth hacks in the inbox. Just the posts. Prefer feeds? <a class="underline decoration-[var(--line)] underline-offset-4 hover:text-[var(--text)]" href="/rss.xml">Use RSS</a>.
+  </p>
+</section>

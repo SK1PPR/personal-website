@@ -5,14 +5,15 @@ import { SITE } from '@/consts';
 <footer class="border-t border-[var(--line)]">
   <div class="mx-auto grid max-w-page gap-4 px-4 py-10 text-sm text-[var(--muted)] sm:px-6 md:grid-cols-[1fr_auto]">
     <p>
-      Built with Astro, MDX, Tailwind CSS, and deployed on Cloudflare Pages.
+      Public systems notebook by {SITE.author}. Built with Astro, MDX, Tailwind CSS, and deployed on Cloudflare Pages.
     </p>
     <div class="flex flex-wrap gap-4">
+      <a class="hover:text-[var(--text)]" href="/blog/#newsletter">Subscribe</a>
+      <a class="hover:text-[var(--text)]" href="/rss.xml">RSS</a>
       <a class="hover:text-[var(--text)]" href={SITE.github}>GitHub</a>
       <a class="hover:text-[var(--text)]" href={SITE.gitlab}>GitLab</a>
       <a class="hover:text-[var(--text)]" href={SITE.linkedin}>LinkedIn</a>
       <a class="hover:text-[var(--text)]" href={SITE.twitter}>X/Twitter</a>
-      <a class="hover:text-[var(--text)]" href="/rss.xml">RSS</a>
     </div>
   </div>
 </footer>
