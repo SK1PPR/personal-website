@@ -1,0 +1,153 @@
+---
+title: "io_uring From First Principles"
+description: "A Linux systems mini-series starter on io_uring: submission queues, completion queues, batched I/O, WAL group commit, and storage-engine block reads."
+area: "Linux I/O"
+status: "mini-series"
+updated: 2026-06-20
+tags: ["io-uring", "linux", "storage-engine", "performance", "systems"]
+---
+
+## Question
+
+What does `io_uring` actually give a storage engine beyond the vague promise of "async file I/O"?
+
+## Core Idea
+
+Traditional blocking I/O has a simple shape:
+
+```text
+call read()
+kernel does work
+thread waits
+read() returns
+```
+
+That is easy to program, but it ties an operation to a waiting thread.
+
+`io_uring` changes the interface into two shared queues:
+
+```text
+submission queue  userspace -> kernel
+completion queue  kernel -> userspace
+```
+
+Userspace writes requests into the submission queue. The kernel processes them and writes results into the completion queue.
+
+The basic loop:
+
+```text
+prepare SQE
+submit SQE
+kernel performs operation
+read CQE
+handle result
+```
+
+SQE means submission queue entry. CQE means completion queue entry.
+
+## Why It Matters
+
+A storage engine may want to:
+
+- append WAL records
+- fsync batched writes
+- read SSTable blocks
+- write compaction output
+- prefetch blocks for scans
+- avoid parking one thread per slow operation
+
+The useful `io_uring` shape is not just async. It is batched submission and batched completion.
+
+Instead of:
+
+```text
+read block
+wait
+read block
+wait
+read block
+wait
+```
+
+the engine can move toward:
+
+```text
+submit many block reads
+do other work
+collect completed reads
+```
+
+## WAL Group Commit
+
+The WAL is one of the most tempting places to use `io_uring`.
+
+A simple write path wants:
+
+```text
+encode record
+append to WAL
+possibly fsync
+update memtable
+acknowledge write
+```
+
+If every write waits for its own fsync, latency gets expensive. A better engine can batch commits:
+
+```text
+collect many writes
+write them together
+fsync once
+acknowledge the group
+```
+
+With `io_uring`, a future version could submit linked work:
+
+```text
+write WAL bytes
+fsync WAL file
+complete batch
+```
+
+That should come after the blocking WAL is correct and benchmarked.
+
+## SSTable Reads
+
+An SSTable point lookup often does:
+
+```text
+check Bloom filter
+search block index
+read one data block
+decode entries
+```
+
+Most reads should eventually hit a block cache. But misses, scans, and compaction inputs can benefit from overlapping block reads.
+
+Possible uses:
+
+- concurrent point lookups
+- range-scan prefetch
+- compaction input streams
+- block-cache miss handling
+
+## Mini-Series Path
+
+Planned notes:
+
+1. SQEs, CQEs, submission, and completion
+2. Registered files and fixed buffers
+3. Linked operations for write plus fsync
+4. Cancellation and timeouts
+5. A small Rust wrapper
+6. SSTable block reads with `io_uring`
+7. Benchmarks against blocking I/O
+
+## Working Rule
+
+Do not add `io_uring` because it sounds modern.
+
+Add it only when the engine has a clear batch, prefetch, compaction, or group-commit workflow that benefits from submitting work first and handling completions later.
+
+Mental model:
+
+**`io_uring` is a shared queue interface for describing I/O work and collecting results.**

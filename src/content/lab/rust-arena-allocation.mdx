@@ -1,0 +1,118 @@
+---
+title: "Arena Allocation in Rust"
+description: "A systems note on arena allocation in Rust: region lifetimes, index handles, allocator overhead, and where arenas fit in memtables and adaptive radix trees."
+area: "Rust internals"
+status: "mini-series"
+updated: 2026-06-20
+tags: ["rust", "arenas", "memory-management", "storage-engine", "systems"]
+---
+
+## Question
+
+When does arena allocation make Rust systems code simpler, and when does it just hide ownership complexity?
+
+## Core Idea
+
+Arena allocation groups many related objects into one region:
+
+```text
+allocate many objects from one region
+free the whole region at once
+```
+
+Instead of asking the general-purpose allocator for every node, key fragment, parser object, or temporary merge entry, the program allocates from a region that has the same lifetime as the larger structure.
+
+That tradeoff appears in compilers, query engines, databases, parsers, and indexes.
+
+## Region Lifetimes
+
+Arenas work best when the system already has a natural lifetime boundary.
+
+In an LSM storage engine, a memtable has exactly that shape:
+
+```text
+active while accepting writes
+immutable while waiting for flush
+dead after successful flush
+```
+
+If the memtable owns an arena, its nodes and key bytes can live exactly as long as the memtable. Individual node deallocation becomes less important because the whole region is retired together.
+
+## Rust Shape
+
+In Rust, arenas often become one of these designs:
+
+- store values in a `Vec<T>` and pass around indexes
+- use a bump allocator for same-lifetime references
+- store bytes in an arena and pass around offsets
+- hide the arena inside the data structure boundary
+
+For storage-engine data structures, index handles are a practical first step:
+
+```rust
+type NodeId = usize;
+
+struct Node {
+    next: Option<NodeId>,
+}
+
+struct Arena {
+    nodes: Vec<Node>,
+}
+```
+
+That avoids self-referential borrowing. The arena owns the nodes, and the structure links them with stable handles.
+
+This is already close to the current skip-list memtable shape in my storage engine: nodes live in a vector and forward pointers are `Option<usize>` links.
+
+## What Arenas Buy
+
+Arenas can help with:
+
+- fewer allocator calls
+- better locality
+- simpler teardown
+- stable handles for graph-like structures
+- clearer phase-based memory ownership
+
+Good storage-engine candidates:
+
+- memtable nodes
+- adaptive radix tree nodes
+- compaction merge buffers
+- SSTable block builders
+- temporary query-planning structures
+
+The key test is:
+
+```text
+do these allocations share one lifetime?
+```
+
+If yes, an arena may simplify the system. If no, it may just keep memory alive too long.
+
+## Footguns
+
+Arenas can:
+
+- delay memory reclamation
+- make deletion semantics awkward
+- create stale-handle bugs
+- hide memory growth until the whole region is dropped
+- add complexity before benchmarks justify it
+
+They should come after a correct baseline, not before one.
+
+## Storage Engine Plan
+
+The likely path:
+
+1. Keep the current skip-list and B-tree memtables correct.
+2. Benchmark allocation-heavy workloads.
+3. Add an adaptive radix tree without clever allocation.
+4. Measure.
+5. Add arena-backed nodes if allocation or locality shows up.
+
+The useful mental model:
+
+**arenas are a lifetime design, not just a faster malloc.**

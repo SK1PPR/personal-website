@@ -7,6 +7,8 @@ tags: ["storage-engine", "lsm-tree", "rust", "databases", "systems"]
 
 I have started building a storage engine in Rust.
 
+This project is still in progress. The current version is not a finished database, and I do not want to pretend it is. It is the first usable slice: enough of an LSM-tree write and read path to make the next problems visible.
+
 The goal is not to wrap RocksDB, or to hide the hard parts behind a crate, or to build an API that looks impressive before the internals exist. The goal is to make the storage path explicit enough that I can point at each moving piece and say:
 
 this is why writes are fast, this is why reads are more complicated, and this is where the next set of problems begins.
@@ -25,6 +27,8 @@ put/delete
 ```
 
 That is enough machinery for the design to stop being abstract.
+
+![Diagram of the current LSM write path and read path: writes append to the WAL and active memtable, rotate through immutable memtables, and flush into SSTables; reads check active memory, immutable memory, then newest SSTables](/blog/lsm-storage-engine/lsm-write-read-path.svg)
 
 ## Why Start With An LSM Tree?
 
@@ -177,6 +181,8 @@ read only that block
 
 That is a much better boundary.
 
+![Diagram of the current SSTable file layout: sorted data blocks followed by a block index, Bloom filter, and footer with offsets and a magic number](/blog/lsm-storage-engine/sstable-layout.svg)
+
 ## Bloom Filters Make Misses Cheap
 
 Every SSTable gets a Bloom filter built while writing the file.
@@ -195,6 +201,8 @@ A Bloom filter can lie in one direction. It can say "maybe present" when the key
 The current filter is intentionally simple: a bitset, several `xxHash3` hash functions, and serialization into the SSTable file. It is not tuned yet. The important thing is that the read path now has the right shape.
 
 ## What Works Now
+
+This is the in-progress state of the project today, not the final architecture.
 
 The current engine supports:
 
@@ -222,7 +230,7 @@ This is the point where the project is no longer just a collection of modules. T
 
 ## What Is Missing
 
-The honest next list is longer than the completed list.
+The honest next list is longer than the completed list. That is expected at this stage: the current engine proves the basic shape, but the serious database work starts after that shape exists.
 
 The engine still needs:
 
@@ -250,6 +258,8 @@ atomically retire old SSTables
 ```
 
 It is also where the project should become more interesting.
+
+For now, I am treating this post as the first checkpoint in a longer storage-engine series. The next posts should be about turning this baseline into something more durable and measurable: manifest recovery, compaction, block caching, and eventually benchmarking it against existing engines.
 
 ## The Lesson
 
