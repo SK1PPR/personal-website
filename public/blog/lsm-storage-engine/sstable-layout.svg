@@ -1,58 +1,50 @@
-<svg width="880" height="520" viewBox="0 0 880 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="880" height="500" viewBox="0 0 880 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">SSTable file layout</title>
   <desc id="desc">The SSTable contains sorted data blocks followed by a block index, Bloom filter, and footer with offsets and lengths.</desc>
   <defs>
+    <marker id="arrow-write" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/></marker>
+    <marker id="arrow-read" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b9cff"/></marker>
     <style>
       .bg{fill:#0d0e0b}
+      .panel{fill:#10110d;stroke:#2d2e27;stroke-width:1.5}
       .grid{stroke:#2d2e27;stroke-width:1}
       .box{fill:#151611;stroke:#3b3d33;stroke-width:2}
       .hot{fill:#142019;stroke:#22c55e;stroke-width:2}
       .accent{fill:#1d1b2a;stroke:#8b9cff;stroke-width:2}
       .text{fill:#f2f1ea;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
       .muted{fill:#aaa79a;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+      .write{stroke:#22c55e;stroke-width:3;marker-end:url(#arrow-write)}
+      .read{stroke:#8b9cff;stroke-width:3;marker-end:url(#arrow-read)}
     </style>
   </defs>
-  <rect class="bg" width="880" height="520" rx="18"/>
-  <path class="grid" d="M80 0V520M160 0V520M240 0V520M320 0V520M400 0V520M480 0V520M560 0V520M640 0V520M720 0V520M800 0V520M0 80H880M0 160H880M0 240H880M0 320H880M0 400H880M0 480H880" opacity=".45"/>
-  <text class="text" x="40" y="58" font-size="22" font-weight="700">SSTable layout in the current storage engine</text>
-  <text class="muted" x="40" y="90" font-size="13">Immutable file: sorted blocks first, lookup metadata at the end.</text>
-
-  <rect class="hot" x="40" y="150" width="150" height="112" rx="10"/>
-  <text class="text" x="78" y="188" font-size="17">data block</text>
-  <text class="muted" x="66" y="218" font-size="12">entry count</text>
-  <text class="muted" x="66" y="240" font-size="12">key/value rows</text>
-
-  <rect class="hot" x="210" y="150" width="150" height="112" rx="10"/>
-  <text class="text" x="248" y="188" font-size="17">data block</text>
-  <text class="muted" x="236" y="218" font-size="12">sorted keys</text>
-  <text class="muted" x="236" y="240" font-size="12">tombstones too</text>
-
-  <rect class="hot" x="380" y="150" width="150" height="112" rx="10"/>
-  <text class="text" x="418" y="188" font-size="17">data block</text>
-  <text class="muted" x="406" y="218" font-size="12">read by offset</text>
-  <text class="muted" x="406" y="240" font-size="12">decoded on demand</text>
-
-  <rect class="box" x="560" y="150" width="110" height="112" rx="10"/>
-  <text class="text" x="586" y="188" font-size="17">index</text>
-  <text class="muted" x="580" y="218" font-size="12">first key</text>
-  <text class="muted" x="580" y="240" font-size="12">offset + len</text>
-
-  <rect class="accent" x="690" y="150" width="88" height="112" rx="10"/>
-  <text class="text" x="710" y="188" font-size="17">filter</text>
-  <text class="muted" x="710" y="218" font-size="12">Bloom</text>
-  <text class="muted" x="710" y="240" font-size="12">miss skip</text>
-
-  <rect class="box" x="798" y="150" width="52" height="112" rx="10"/>
-  <text class="text" x="809" y="188" font-size="14">footer</text>
-  <text class="muted" x="810" y="218" font-size="10">magic</text>
-  <text class="muted" x="810" y="238" font-size="10">offsets</text>
-
-  <text class="muted" x="44" y="306" font-size="12">file start</text>
-  <text class="muted" x="794" y="306" font-size="12">file end</text>
-  <path d="M48 292H844" stroke="#3b3d33" stroke-width="2"/>
-  <path d="M48 284V300M844 284V300" stroke="#3b3d33" stroke-width="2"/>
-
-  <rect class="box" x="80" y="370" width="720" height="74" rx="10"/>
-  <text class="text" x="110" y="400" font-size="16">reader path</text>
-  <text class="muted" x="110" y="426" font-size="12">read footer -> load index/filter -> use first-key index to read one candidate block</text>
+  <rect class="bg" width="880" height="500" rx="18"/>
+  <path class="grid" d="M80 0V500M160 0V500M240 0V500M320 0V500M400 0V500M480 0V500M560 0V500M640 0V500M720 0V500M800 0V500M0 80H880M0 160H880M0 240H880M0 320H880M0 400H880M0 480H880" opacity=".38"/>
+  <rect class="panel" x="24" y="24" width="832" height="452" rx="10"/>
+  <text class="text" x="54" y="72" font-size="22" font-weight="700">SSTable layout in the current storage engine</text>
+  <text class="muted" x="54" y="102" font-size="13">Immutable file: sorted blocks first, lookup metadata at the end.</text>
+  <rect class="hot" x="54" y="154" width="146" height="92" rx="10"/>
+  <text class="text" x="78" y="188" font-size="18" font-weight="700">data block</text>
+  <text class="muted" x="78" y="212" font-size="12">entry count / rows</text>
+  <rect class="hot" x="220" y="154" width="146" height="92" rx="10"/>
+  <text class="text" x="244" y="188" font-size="18" font-weight="700">data block</text>
+  <text class="muted" x="244" y="212" font-size="12">sorted keys</text>
+  <rect class="hot" x="386" y="154" width="146" height="92" rx="10"/>
+  <text class="text" x="410" y="188" font-size="18" font-weight="700">data block</text>
+  <text class="muted" x="410" y="212" font-size="12">decoded on demand</text>
+  <rect class="box" x="560" y="154" width="112" height="92" rx="10"/>
+  <text class="text" x="584" y="188" font-size="18" font-weight="700">index</text>
+  <text class="muted" x="584" y="212" font-size="12">first key -&gt; offset</text>
+  <rect class="accent" x="692" y="154" width="96" height="92" rx="10"/>
+  <text class="text" x="716" y="188" font-size="18" font-weight="700">filter</text>
+  <text class="muted" x="716" y="212" font-size="12">Bloom miss skip</text>
+  <rect class="box" x="808" y="154" width="64" height="92" rx="10"/>
+  <text class="text" x="832" y="188" font-size="18" font-weight="700">footer</text>
+  <text class="muted" x="832" y="212" font-size="12">magic + offsets</text>
+  <path d="M64 292H842" stroke="#3b3d33" stroke-width="2"/>
+  <path d="M64 284V300M842 284V300" stroke="#3b3d33" stroke-width="2"/>
+  <text class="muted" x="58" y="318" font-size="12">file start</text>
+  <text class="muted" x="790" y="318" font-size="12">file end</text>
+  <rect class="box" x="110" y="366" width="660" height="72" rx="10"/>
+  <text class="text" x="136" y="396" font-size="16" font-weight="700">reader path</text>
+  <text class="muted" x="136" y="422" font-size="12">read footer -&gt; load index/filter -&gt; use first-key index to read one candidate block</text>
 </svg>

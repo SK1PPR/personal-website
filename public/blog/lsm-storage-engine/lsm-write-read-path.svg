@@ -1,69 +1,62 @@
 <svg width="880" height="560" viewBox="0 0 880 560" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">LSM storage engine write and read path</title>
-  <desc id="desc">Writes append to the WAL, update the active memtable, rotate into immutable memtables, and flush into SSTables. Reads check active memory, immutable memory, and then newest SSTables.</desc>
+  <desc id="desc">Writes append to the WAL and active memtable, rotate into immutable memtables, and flush into SSTables. Reads check active memory, immutable memory, then newest SSTables.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/>
-    </marker>
+    <marker id="arrow-write" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/></marker>
+    <marker id="arrow-read" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b9cff"/></marker>
     <style>
       .bg{fill:#0d0e0b}
+      .panel{fill:#10110d;stroke:#2d2e27;stroke-width:1.5}
       .grid{stroke:#2d2e27;stroke-width:1}
       .box{fill:#151611;stroke:#3b3d33;stroke-width:2}
       .hot{fill:#142019;stroke:#22c55e;stroke-width:2}
+      .accent{fill:#1d1b2a;stroke:#8b9cff;stroke-width:2}
       .text{fill:#f2f1ea;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
       .muted{fill:#aaa79a;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-      .line{stroke:#22c55e;stroke-width:3;marker-end:url(#arrow)}
-      .read{stroke:#8b9cff;stroke-width:3;marker-end:url(#arrow)}
+      .write{stroke:#22c55e;stroke-width:3;marker-end:url(#arrow-write)}
+      .read{stroke:#8b9cff;stroke-width:3;marker-end:url(#arrow-read)}
     </style>
   </defs>
   <rect class="bg" width="880" height="560" rx="18"/>
-  <path class="grid" d="M80 0V560M160 0V560M240 0V560M320 0V560M400 0V560M480 0V560M560 0V560M640 0V560M720 0V560M800 0V560M0 80H880M0 160H880M0 240H880M0 320H880M0 400H880M0 480H880" opacity=".45"/>
-  <text class="text" x="40" y="58" font-size="22" font-weight="700">LSM-shaped storage engine: current write/read path</text>
-  <text class="muted" x="40" y="90" font-size="13">In progress: compaction, manifest recovery, block cache, and startup WAL replay are next.</text>
-
-  <rect class="box" x="40" y="150" width="130" height="76" rx="10"/>
-  <text class="text" x="66" y="182" font-size="17">put/delete</text>
-  <text class="muted" x="66" y="208" font-size="12">client write</text>
-
-  <rect class="hot" x="230" y="130" width="150" height="70" rx="10"/>
-  <text class="text" x="282" y="160" font-size="17">WAL</text>
-  <text class="muted" x="252" y="184" font-size="12">length + checksum</text>
-
-  <rect class="hot" x="230" y="248" width="150" height="70" rx="10"/>
-  <text class="text" x="278" y="278" font-size="17">active</text>
-  <text class="muted" x="253" y="302" font-size="12">skip-list memtable</text>
-
-  <rect class="box" x="470" y="248" width="170" height="70" rx="10"/>
-  <text class="text" x="505" y="278" font-size="17">immutables</text>
-  <text class="muted" x="506" y="302" font-size="12">readable before flush</text>
-
-  <rect class="box" x="690" y="194" width="150" height="82" rx="10"/>
-  <text class="text" x="714" y="228" font-size="17">SSTables</text>
-  <text class="muted" x="712" y="252" font-size="12">blocks + index</text>
-
-  <path class="line" d="M170 184 C192 184 202 165 230 165"/>
-  <path class="line" d="M170 198 C198 222 202 283 230 283"/>
-  <path class="line" d="M380 283H470"/>
-  <path class="line" d="M640 283 C666 283 670 235 690 235"/>
-
-  <text class="muted" x="240" y="110" font-size="12">write first</text>
-  <text class="muted" x="456" y="230" font-size="12">rotate when full</text>
-  <text class="muted" x="682" y="174" font-size="12">flush sorted entries</text>
-
-  <rect class="box" x="40" y="402" width="130" height="76" rx="10"/>
-  <text class="text" x="72" y="434" font-size="17">get(key)</text>
-  <text class="muted" x="66" y="460" font-size="12">client read</text>
-
-  <path class="read" d="M170 440H230"/>
-  <path class="read" d="M380 440H470"/>
-  <path class="read" d="M640 440H690"/>
-  <rect class="hot" x="230" y="402" width="150" height="76" rx="10"/>
-  <text class="text" x="278" y="434" font-size="17">active</text>
-  <text class="muted" x="257" y="460" font-size="12">newest memory</text>
-  <rect class="box" x="470" y="402" width="170" height="76" rx="10"/>
-  <text class="text" x="508" y="434" font-size="17">immutables</text>
-  <text class="muted" x="508" y="460" font-size="12">newest to oldest</text>
-  <rect class="box" x="690" y="402" width="150" height="76" rx="10"/>
-  <text class="text" x="725" y="434" font-size="17">SSTables</text>
-  <text class="muted" x="715" y="460" font-size="12">newest to oldest</text>
+  <path class="grid" d="M80 0V560M160 0V560M240 0V560M320 0V560M400 0V560M480 0V560M560 0V560M640 0V560M720 0V560M800 0V560M0 80H880M0 160H880M0 240H880M0 320H880M0 400H880M0 480H880" opacity=".38"/>
+  <rect class="panel" x="24" y="24" width="832" height="512" rx="10"/>
+  <text class="text" x="54" y="72" font-size="22" font-weight="700">LSM-shaped storage engine: current write/read path</text>
+  <text class="muted" x="54" y="102" font-size="13">In progress: compaction, manifest recovery, block cache, and startup WAL replay are next.</text>
+  <path class="write" d="M184 188 C215 188, 215 160, 236 160"/>
+  <text class="muted" x="181" y="160" font-size="12">write first</text>
+  <path class="write" d="M184 188 C215 188, 215 288, 236 288"/>
+  <path class="write" d="M396 288H490"/>
+  <text class="muted" x="414" y="270" font-size="12">rotate when full</text>
+  <path class="write" d="M676 288 C698 288, 698 234, 710 234"/>
+  <text class="muted" x="664" y="247" font-size="12">flush sorted</text>
+  <path class="read" d="M184 440H236"/>
+  <path class="read" d="M396 440H490"/>
+  <path class="read" d="M676 440H710"/>
+  <rect class="box" x="54" y="150" width="130" height="76" rx="10"/>
+  <text class="text" x="78" y="184" font-size="18" font-weight="700">put/delete</text>
+  <text class="muted" x="78" y="208" font-size="12">client write</text>
+  <rect class="hot" x="246" y="122" width="150" height="76" rx="10"/>
+  <text class="text" x="270" y="156" font-size="18" font-weight="700">WAL</text>
+  <text class="muted" x="270" y="180" font-size="12">length + checksum</text>
+  <rect class="hot" x="246" y="250" width="150" height="76" rx="10"/>
+  <text class="text" x="270" y="284" font-size="18" font-weight="700">active</text>
+  <text class="muted" x="270" y="308" font-size="12">skip-list memtable</text>
+  <rect class="box" x="500" y="250" width="176" height="76" rx="10"/>
+  <text class="text" x="524" y="284" font-size="18" font-weight="700">immutables</text>
+  <text class="muted" x="524" y="308" font-size="12">readable before flush</text>
+  <rect class="box" x="720" y="196" width="120" height="76" rx="10"/>
+  <text class="text" x="744" y="230" font-size="18" font-weight="700">SSTables</text>
+  <text class="muted" x="744" y="254" font-size="12">blocks + index</text>
+  <rect class="box" x="54" y="402" width="130" height="76" rx="10"/>
+  <text class="text" x="78" y="436" font-size="18" font-weight="700">get(key)</text>
+  <text class="muted" x="78" y="460" font-size="12">client read</text>
+  <rect class="hot" x="246" y="402" width="150" height="76" rx="10"/>
+  <text class="text" x="270" y="436" font-size="18" font-weight="700">active</text>
+  <text class="muted" x="270" y="460" font-size="12">newest memory</text>
+  <rect class="box" x="500" y="402" width="176" height="76" rx="10"/>
+  <text class="text" x="524" y="436" font-size="18" font-weight="700">immutables</text>
+  <text class="muted" x="524" y="460" font-size="12">newest to oldest</text>
+  <rect class="box" x="720" y="402" width="120" height="76" rx="10"/>
+  <text class="text" x="744" y="436" font-size="18" font-weight="700">SSTables</text>
+  <text class="muted" x="744" y="460" font-size="12">newest to oldest</text>
 </svg>
