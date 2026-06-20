@@ -7,6 +7,7 @@ import { formatDate, readingTime, sortByDate } from '@/utils/content';
 
 const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft));
 const subscribeStatus = Astro.url.searchParams.get('subscribe');
+const subscribeCode = Astro.url.searchParams.get('code');
 const statusMessages: Record<string, string> = {
   ok: 'You are on the list. New notes will land in your inbox.',
   invalid: 'That email address did not look right. Try again below.',
@@ -49,7 +50,7 @@ const featuredSeries = [
 
     {subscribeStatus && statusMessages[subscribeStatus] && (
       <div class="mt-8 rounded border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)]">
-        {statusMessages[subscribeStatus]}
+        {statusMessages[subscribeStatus]}{subscribeCode && ` Resend status: ${subscribeCode}.`}
       </div>
     )}
 
