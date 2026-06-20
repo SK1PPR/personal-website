@@ -4,6 +4,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import Card from '@/components/Card.astro';
 import NewsletterSignup from '@/components/NewsletterSignup.astro';
 import { formatDate, readingTime, sortByDate } from '@/utils/content';
+import { BLOG_SERIES } from '@/utils/series';
 
 const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft));
 const subscribeStatus = Astro.url.searchParams.get('subscribe');
@@ -21,23 +22,10 @@ const topics = [...new Set(posts.flatMap((post) => post.data.tags))]
     posts: posts.filter((post) => post.data.tags.includes(tag))
   }))
   .sort((a, b) => b.posts.length - a.posts.length || a.tag.localeCompare(b.tag));
-const featuredSeries = [
-  {
-    title: 'Building A Storage Engine',
-    description: 'LSM trees, WAL records, memtables, SSTables, Bloom filters, compaction, and the road toward a serious database core.',
-    tags: ['storage-engine', 'lsm-tree', 'databases']
-  },
-  {
-    title: 'Redis Internals',
-    description: 'Event loops, profiling, protocol details, and the parts of a clone that turn into systems lessons.',
-    tags: ['redis', 'performance', 'systems']
-  },
-  {
-    title: 'Build The Primitive',
-    description: 'Small from-scratch implementations that explain bigger infrastructure ideas.',
-    tags: ['rust', 'state-machines', 'systems']
-  }
-];
+const featuredSeries = BLOG_SERIES.map((series) => ({
+  ...series,
+  postCount: posts.filter((post) => series.tags.some((tag) => post.data.tags.includes(tag))).length
+}));
 ---
 
 <BaseLayout title="Engineering Notes" description="Technical writing, build logs, and reading notes on distributed systems, databases, Linux, observability, and performance.">
@@ -62,9 +50,9 @@ const featuredSeries = [
       <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Series</p>
       <div class="grid gap-4 md:grid-cols-3">
         {featuredSeries.map((series) => (
-          <Card title={series.title} meta={series.tags.join(' / ')} description={series.description}>
+          <Card href={`/series/${series.slug}/`} title={series.title} meta={`${series.postCount} ${series.postCount === 1 ? 'post' : 'posts'}`} description={series.description}>
             <div class="mt-4 flex flex-wrap gap-2">
-              {series.tags.map((tag) => <a class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)] hover:text-[var(--text)]" href={`#${tag}`}>{tag}</a>)}
+              {series.tags.map((tag) => <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)]">{tag}</span>)}
             </div>
           </Card>
         ))}

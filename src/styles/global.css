@@ -79,6 +79,16 @@ a {
   margin-top: 1rem;
 }
 
+.prose-engineering img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
 .prose-engineering a {
   color: var(--accent);
   text-decoration: underline;

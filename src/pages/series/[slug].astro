@@ -1,0 +1,66 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Card from '@/components/Card.astro';
+import NewsletterSignup from '@/components/NewsletterSignup.astro';
+import { SITE } from '@/consts';
+import { BLOG_SERIES } from '@/utils/series';
+import { formatDate, readingTime, sortByDate } from '@/utils/content';
+
+export async function getStaticPaths() {
+  return BLOG_SERIES.map((series) => ({
+    params: { slug: series.slug },
+    props: { series }
+  }));
+}
+
+const { series } = Astro.props;
+const posts = sortByDate((await getCollection('blog')).filter((post) => !post.data.draft))
+  .filter((post) => series.tags.some((tag) => post.data.tags.includes(tag)));
+const canonical = new URL(`/series/${series.slug}/`, SITE.url).toString();
+const seriesJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: series.title,
+  description: series.description,
+  url: canonical,
+  hasPart: posts.map((post) => ({
+    '@type': 'BlogPosting',
+    headline: post.data.title,
+    url: new URL(`/blog/${post.slug}/`, SITE.url).toString(),
+    datePublished: post.data.pubDate.toISOString()
+  }))
+};
+---
+
+<BaseLayout title={series.title} description={series.description} jsonLd={seriesJsonLd}>
+  <section class="mx-auto max-w-page px-4 py-12 sm:px-6">
+    <p class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">Series</p>
+    <h1 class="max-w-4xl text-4xl font-semibold tracking-normal sm:text-5xl">{series.title}</h1>
+    <p class="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">{series.description}</p>
+
+    <div class="mt-8 flex flex-wrap gap-2">
+      {series.tags.map((tag) => <span class="rounded border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-xs text-[var(--muted)]">{tag}</span>)}
+    </div>
+
+    <div class="mt-12 grid gap-4">
+      {posts.map((post) => (
+        <Card href={`/blog/${post.slug}/`} title={post.data.title} meta={`${formatDate(post.data.pubDate)} / ${readingTime(post.body)}`} description={post.data.description}>
+          <div class="mt-4 flex flex-wrap gap-2">
+            {post.data.tags.map((tag) => <span class="rounded border border-[var(--line)] px-2 py-1 font-mono text-xs text-[var(--muted)]">{tag}</span>)}
+          </div>
+        </Card>
+      ))}
+    </div>
+
+    {posts.length === 0 && (
+      <div class="notebook-panel mt-12 rounded-md p-6 text-sm text-[var(--muted)]">
+        No posts are published in this series yet.
+      </div>
+    )}
+
+    <div class="mt-12">
+      <NewsletterSignup title={`Follow ${series.title}`} description="Get new posts in this series when they ship." />
+    </div>
+  </section>
+</BaseLayout>

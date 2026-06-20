@@ -26,7 +26,7 @@ export const onRequestPost = async ({ request, env }: PagesContext) => {
 
   if (honeypot) return redirect(request, 'ok');
   if (!EMAIL_RE.test(email)) return redirect(request, 'invalid');
-  const resendApiKey = env.RESEND_API_KEY?.trim();
+  const resendApiKey = env.RESEND_API_KEY?.replace(/\s+/g, '');
   if (!resendApiKey) return redirect(request, 'missing-config');
 
   const body: Record<string, unknown> = {
