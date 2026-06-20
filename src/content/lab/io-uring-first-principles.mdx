@@ -130,18 +130,6 @@ Possible uses:
 - compaction input streams
 - block-cache miss handling
 
-## Mini-Series Path
-
-Planned notes:
-
-1. SQEs, CQEs, submission, and completion
-2. Registered files and fixed buffers
-3. Linked operations for write plus fsync
-4. Cancellation and timeouts
-5. A small Rust wrapper
-6. SSTable block reads with `io_uring`
-7. Benchmarks against blocking I/O
-
 ## Working Rule
 
 Do not add `io_uring` because it sounds modern.
