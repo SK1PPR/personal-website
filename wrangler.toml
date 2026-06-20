@@ -3,5 +3,8 @@ compatibility_date = "2026-05-29"
 main = "src/worker.ts"
 pages_build_output_dir = "dist"
 
+[vars]
+RESEND_FROM = "Khushal Agrawal <notes@blogs.khushal.net>"
+
 [assets]
 directory = "./dist"

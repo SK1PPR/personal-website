@@ -3,6 +3,7 @@ interface Env {
     fetch(request: Request): Promise<Response>;
   };
   RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
   RESEND_SEGMENT_ID?: string;
   RESEND_TOPIC_ID?: string;
 }
