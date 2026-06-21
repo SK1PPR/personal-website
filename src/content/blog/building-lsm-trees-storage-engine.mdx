@@ -2,10 +2,11 @@
 title: "I Built LSM Trees for a Storage Engine"
 description: "The first notes from building a Rust storage engine: WAL records, skip-list memtables, immutable memtables, SSTable files, block indexes, tombstones, and Bloom filters."
 pubDate: 2026-06-20
+updatedDate: 2026-06-21
 tags: ["storage-engine", "lsm-tree", "rust", "databases", "systems"]
 ---
 
-I have started building a storage engine in Rust.
+I have started building a storage engine in Rust. It now has a name too: [`pocket-lsm`](https://crates.io/crates/pocket-lsm), published as an experimental `0.1.0` crate with the source on [GitHub](https://github.com/SK1PPR/pocket-lsm).
 
 This project is still in progress. The current version is not a finished database, and I do not want to pretend it is. It is the first usable slice: enough of an LSM-tree write and read path to make the next problems visible.
 
@@ -15,7 +16,7 @@ this is why writes are fast, this is why reads are more complicated, and this is
 
 So the first milestone was an LSM-shaped engine.
 
-Not a production LSM yet. There is no compaction policy, manifest recovery, block cache, or async I/O path. But the core shape is there:
+Not a production LSM yet. There is no compaction policy, block cache, or async I/O path. But the core shape is there:
 
 ```text
 put/delete
@@ -26,7 +27,7 @@ put/delete
   -> read active, immutable, and disk tables newest-first
 ```
 
-That is enough machinery for the design to stop being abstract.
+That is enough machinery for the design to stop being abstract. The newer checkpoint adds the pieces that make the engine restartable: WAL replay, manifest records, and a `CURRENT` file for durable ids.
 
 ![Diagram of the current LSM write path and read path: writes append to the WAL and active memtable, rotate through immutable memtables, and flush into SSTables; reads check active memory, immutable memory, then newest SSTables](/blog/lsm-storage-engine/lsm-write-read-path.svg)
 
@@ -71,7 +72,7 @@ value bytes
 
 There are two record types today: `Put` and `Delete`.
 
-The checksum matters because a WAL is only useful if replay can distinguish a complete record from corrupt or partial bytes. The log code can already replay records and verify checksums; engine-level startup recovery is still on the roadmap.
+The checksum matters because a WAL is only useful if replay can distinguish a complete record from corrupt or partial bytes. The log code can replay records and verify checksums, and engine startup now uses that path for crash recovery.
 
 After the WAL append succeeds, the engine updates the active memtable.
 
@@ -81,7 +82,7 @@ That order is intentional:
 WAL first, memory second
 ```
 
-If I ever add crash recovery, the WAL has to be the source that can rebuild memory. Writing to the memtable first would make the fast path feel nicer while making the durability story dishonest.
+Crash recovery depends on that ordering. The WAL is the source that rebuilds memory after a restart. Writing to the memtable first would make the fast path feel nicer while making the durability story dishonest.
 
 ## The MemTable Is A Skip List
 
@@ -124,6 +125,8 @@ new empty active memtable
 new WAL segment
 ```
 
+The WAL segment rotates at the same time as the memtable. That gives recovery a useful boundary: one WAL segment can rebuild one recovered memtable.
+
 The immutable queue matters because flushing to disk should not make recently written keys unreadable.
 
 Reads check:
@@ -135,6 +138,30 @@ Reads check:
 That newest-first ordering is the simplest way to preserve overwrite and delete semantics. If `alpha = one` exists in an older SSTable and `alpha = two` exists in a newer memtable, the read must stop at the newer value. If the newest entry is a tombstone, the engine returns `None`.
 
 This is the first place where the LSM stops feeling like "write sorted files" and starts feeling like a versioned data structure.
+
+## Managers, Manifest, And CURRENT
+
+The engine started as a single owner of many vectors and paths. That worked for the first version, but it made recovery and future compaction feel too tangled.
+
+The current shape splits ownership into managers:
+
+- `WALManager` owns WAL segment creation, rotation, and replay
+- `MemTableManager` owns the active memtable and immutable memtable queue
+- `SSTableManager` owns table files and table metadata in memory
+- `ManifestManager` owns manifest records for durable SSTable metadata
+
+The engine coordinates those managers instead of directly pushing SSTables into a vector.
+
+There is also a `CURRENT` file. It stores the ids that have to survive restarts:
+
+```text
+next_sstable_id
+next_wal_id
+next_manifest_id
+next_sequence_id
+```
+
+That file is small, but it is important. Without it, recovery can reconstruct data and still accidentally reuse an id that was already written before the crash.
 
 ## Flushing To SSTables
 
@@ -200,6 +227,20 @@ A Bloom filter can lie in one direction. It can say "maybe present" when the key
 
 The current filter is intentionally simple: a bitset, several `xxHash3` hash functions, and serialization into the SSTable file. It is not tuned yet. The important thing is that the read path now has the right shape.
 
+## Crash Recovery
+
+The latest checkpoint has engine-level recovery.
+
+Startup does three things:
+
+1. read `CURRENT` so future ids continue from the recovered state
+2. replay manifest records so the live SSTable set comes back into memory
+3. replay WAL files in id order and rebuild memtables from those records
+
+The WAL replay preserves segment boundaries. If the engine had rotated from one memtable to the next before the crash, recovery creates the same kind of active/immutable layout instead of merging every WAL record into one giant table.
+
+There is also an external smoke test that starts a writer process, terminates it, reopens the database, and checks that acknowledged writes are still readable. It is not a replacement for a serious fault-injection suite, but it catches a more realistic failure than a normal unit test.
+
 ## What Works Now
 
 This is the in-progress state of the project today, not the final architecture.
@@ -208,9 +249,13 @@ The current engine supports:
 
 - `put`, `get`, and `delete`
 - file-backed WAL records with length and checksum
+- WAL segment rotation with memtable rotation
+- engine startup recovery from WAL files
 - active and immutable memtables
 - memtable rotation by approximate size
 - flushing immutable memtables into SSTable files
+- manifest-backed SSTable metadata
+- a `CURRENT` file for durable id allocation
 - block-indexed SSTable reads
 - tombstones across memory and disk
 - Bloom-filter checks before touching SSTable blocks
@@ -225,6 +270,9 @@ The tests cover the first set of invariants:
 - keep immutable memtables readable before flush
 - write, reopen, get, miss, tombstone, and iterate SSTable files
 - round-trip WAL records and reject checksum corruption
+- compact manifest records into a fresh manifest file
+- recover memtables and SSTables after reopening the engine
+- run an external crash-recovery smoke test that kills and restarts the process
 
 This is the point where the project is no longer just a collection of modules. The modules have started putting pressure on each other.
 
@@ -234,14 +282,15 @@ The honest next list is longer than the completed list. That is expected at this
 
 The engine still needs:
 
-- WAL replay during engine startup
-- manifest files for SSTable metadata
 - atomic SSTable install
 - compaction
+- background compaction jobs
+- async APIs and async I/O
 - sorted merge iterators
 - block cache
 - benchmarks
-- crash-recovery tests
+- more fault-injection tests
+- performance optimizations
 
 Compaction is the big one.
 
@@ -259,7 +308,7 @@ atomically retire old SSTables
 
 It is also where the project should become more interesting.
 
-For now, I am treating this post as the first checkpoint in a longer storage-engine series. The next posts should be about turning this baseline into something more durable and measurable: manifest recovery, compaction, block caching, and eventually benchmarking it against existing engines.
+For now, I am treating this post as the first checkpoint in a longer storage-engine series. The next posts should be about turning this baseline into something more durable and measurable: compaction, background jobs, block caching, and eventually benchmarking it against existing engines.
 
 ## The Lesson
 
