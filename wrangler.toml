@@ -1,4 +1,4 @@
-name = "khushal-infra-notebook"
+name = "personal-website"
 compatibility_date = "2026-05-29"
 main = "src/worker.ts"
 pages_build_output_dir = "dist"
